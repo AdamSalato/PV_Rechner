@@ -1,0 +1,1896 @@
+<title>PV-Anlagenrechner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<style>
+/* Layout: Datenblatt-Werkzeug. Links Parameterspalte, rechts Ergebnis-Reiter. Zellenblau + Sonnenbernstein. */
+:root{
+  --bg:#e9edf1; --panel:#ffffff; --panel2:#f4f6f9; --ink:#132130; --muted:#586777; --line:#d3dbe3;
+  --cell:#1d4f7c; --cell-soft:#dbe6f1; --sun:#c7780a; --sun-soft:#fbecd2;
+  --teal:#23807d; --rose:#b3412f; --grey:#8a97a5; --good:#2c7d48; --warn:#a8670b; --bad:#b3412f;
+  --b8:#d97f0c; --b7:#e8a442; --b6:#f1c27d; --b5:#f4dcb3; --b4:#dde2e7; --b3:#b9c6d2; --b2:#90a6ba; --b1:#6884a0; --b0:#445f7d;
+  --s1:#1d63a8; --s2:#d9730d; --s3:#2a8a5e; --s4:#b8336a; --s5:#6f4fb8; --s6:#0f8b9c; --s7:#8d6b12; --s8:#c23b22;
+  --roof:#dfe5eb; --roofline:#7b8896;
+  --f-disp:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d141b; --panel:#141e28; --panel2:#18242f; --ink:#e3e9ef; --muted:#93a2b1; --line:#283746;
+  --cell:#6fa8dc; --cell-soft:#1b2f43; --sun:#f0a53a; --sun-soft:#3a2a12;
+  --teal:#4fb7b2; --rose:#e2735f; --grey:#7f8d9b; --good:#5bbf7c; --warn:#e5a443; --bad:#e2735f;
+  --b8:#f0a032; --b7:#d88a2a; --b6:#b5762e; --b5:#8a6638; --b4:#4c5866; --b3:#3d5268; --b2:#33495f; --b1:#2a3e53; --b0:#213244;
+  --s1:#6ea8e6; --s2:#f29b45; --s3:#5cc08f; --s4:#e277a4; --s5:#a68be8; --s6:#4cc3d1; --s7:#d1ac4a; --s8:#ef7158;
+  --roof:#1f2b37; --roofline:#6b7a8a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d141b; --panel:#141e28; --panel2:#18242f; --ink:#e3e9ef; --muted:#93a2b1; --line:#283746;
+  --cell:#6fa8dc; --cell-soft:#1b2f43; --sun:#f0a53a; --sun-soft:#3a2a12;
+  --teal:#4fb7b2; --rose:#e2735f; --grey:#7f8d9b; --good:#5bbf7c; --warn:#e5a443; --bad:#e2735f;
+  --b8:#f0a032; --b7:#d88a2a; --b6:#b5762e; --b5:#8a6638; --b4:#4c5866; --b3:#3d5268; --b2:#33495f; --b1:#2a3e53; --b0:#213244;
+  --s1:#6ea8e6; --s2:#f29b45; --s3:#5cc08f; --s4:#e277a4; --s5:#a68be8; --s6:#4cc3d1; --s7:#d1ac4a; --s8:#ef7158;
+  --roof:#1f2b37; --roofline:#6b7a8a;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--f-disp);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0}
+.num,td.n,th.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:12px;min-width:0;flex-wrap:wrap}
+.brand h1{font-size:28px;line-height:1}
+.brand .sub{color:var(--muted);font-size:12.5px}
+.mark{width:26px;height:26px;flex:none;align-self:center}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto;min-width:0;max-width:100%}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:6px;padding:7px 12px;cursor:pointer;font-size:13px}
+.btn:hover{border-color:var(--cell)}
+.btn.pri{background:var(--cell);border-color:var(--cell);color:var(--panel)}
+.btn.sm{padding:4px 9px;font-size:12px}
+.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,[role=tab]:focus-visible{outline:2px solid var(--sun);outline-offset:1px}
+.status{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+select.preset{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:7px 8px;max-width:100%;min-width:0}
+
+.app{display:grid;grid-template-columns:minmax(330px,390px) minmax(0,1fr);gap:16px;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));align-items:start}
+@media (max-width:900px){.app{grid-template-columns:minmax(0,1fr)}}
+aside.inputs{display:flex;flex-direction:column;gap:8px;min-width:0}
+@media (min-width:901px){aside.inputs{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-right:4px}}
+details.sec{background:var(--panel);border:1px solid var(--line);border-radius:8px}
+details.sec>summary{cursor:pointer;list-style:none;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-family:var(--f-disp);font-size:18px;font-weight:600}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:"+";font-family:var(--f-mono);color:var(--muted);font-size:16px}
+details.sec[open]>summary::after{content:"–"}
+details.sec>summary small{font-family:var(--f-body);font-size:11.5px;color:var(--muted);font-weight:400;margin-left:8px;margin-right:auto}
+.secbody{padding:4px 14px 14px;display:flex;flex-direction:column;gap:8px}
+.fld{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:4px 10px;align-items:center}
+.fld .lab{font-size:13px;min-width:0}
+.fld small{grid-column:1/-1;color:var(--muted);font-size:11.5px;margin-top:-2px}
+.ctl{display:flex;align-items:center;gap:6px;min-width:0}
+.ctl input[type=number],.ctl select{width:100%;min-width:0;border:1px solid var(--line);background:var(--panel2);border-radius:5px;padding:5px 7px;font-family:var(--f-mono);font-size:13px;text-align:right}
+.ctl select{text-align:left;font-family:var(--f-body)}
+.ctl .unit{font-size:11px;color:var(--muted);font-family:var(--f-mono);white-space:nowrap;min-width:46px}
+.fld.wide{grid-template-columns:minmax(0,1fr)}
+.fld.wide .ctl select{width:100%}
+textarea{width:100%;border:1px solid var(--line);background:var(--panel2);border-radius:5px;padding:6px;font-family:var(--f-mono);font-size:12px;resize:vertical}
+.hgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.hgrid label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);font-family:var(--f-mono)}
+.hgrid input{border:1px solid var(--line);background:var(--panel2);border-radius:5px;padding:4px 6px;font-family:var(--f-mono);font-size:13px;text-align:right;width:100%}
+.dim{opacity:.45}
+.surf{border:1px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:7px;background:var(--panel2)}
+.surf.tpl{background:var(--cell-soft);border-color:transparent}
+.surf.tpl .ttl{font-weight:600;font-size:13px}
+.surf .sh{display:flex;gap:8px;align-items:center}
+.surf .sh input{flex:1;min-width:0;border:1px solid var(--line);background:var(--panel);border-radius:5px;padding:5px 7px;font-weight:600}
+.surf .info{font-family:var(--f-mono);font-size:11.5px;color:var(--cell)}
+.xbtn{border:1px solid var(--line);background:var(--panel);border-radius:5px;padding:4px 8px;cursor:pointer;font-size:12px}
+
+section.results{min-width:0;display:flex;flex-direction:column;gap:12px}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:2px solid var(--line);scrollbar-width:thin}
+nav.tabs button{border:0;background:none;padding:9px 14px;cursor:pointer;font-family:var(--f-disp);font-size:17px;font-weight:600;color:var(--muted);white-space:nowrap;border-bottom:3px solid transparent;margin-bottom:-2px}
+nav.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--sun)}
+.panel{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.card h2{font-size:20px;margin-bottom:8px}
+.card h3{font-size:16px;margin-bottom:6px}
+.card p.note{color:var(--muted);font-size:12.5px;margin:6px 0 0;max-width:90ch}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:1150px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:620px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.kpi .v{font-family:var(--f-disp);font-size:30px;font-weight:600;line-height:1.05;font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:15px;color:var(--muted);font-weight:500;margin-left:3px}
+.kpi .s{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.kpi.pos .v{color:var(--good)} .kpi.neg .v{color:var(--bad)}
+.chartbox{position:relative;height:300px;width:100%}
+.chartbox.tall{height:380px}.chartbox.short{height:230px}
+.flowbar{display:flex;height:22px;border-radius:4px;overflow:hidden;background:var(--panel2)}
+.flowbar>div{height:100%;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:12.5px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:2px;display:inline-block}
+.flowrow{display:flex;flex-direction:column;gap:4px;margin-top:12px}
+.flowrow .t{display:flex;justify-content:space-between;font-size:13px}
+.tablewrap,.svgwrap{overflow-x:auto}
+.svgwrap svg{display:block;min-width:720px;width:100%;height:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+td.n,th.n{text-align:right}
+td.okc{color:var(--good)} td.warnc{color:var(--warn);font-weight:600} td.badc{color:var(--bad);font-weight:600}
+tr.sum td{font-weight:600;border-top:2px solid var(--ink)}
+tr.hl td{background:var(--sun-soft)}
+.warns{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.warns li{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.chip{flex:none;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:10px;border:1px solid currentColor;margin-top:1px}
+.chip.bad{color:var(--bad)} .chip.warn{color:var(--warn)} .chip.ok{color:var(--good)} .chip.info{color:var(--cell)}
+.casc td.bar{width:42%}
+.casc .bb{height:12px;background:var(--cell);border-radius:2px}
+.casc .bb.loss{background:var(--rose)} .casc .bb.gain{background:var(--sun)}
+.casc tr.lvl td{font-weight:600;background:var(--panel2)}
+.rec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:700px){.rec{grid-template-columns:minmax(0,1fr)}}
+.recbox{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--panel2);display:flex;flex-direction:column;gap:5px;min-width:0}
+.recbox .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.recbox .big{font-family:var(--f-disp);font-size:24px;font-weight:600;line-height:1.1}
+.recbox .det{font-size:12.5px;color:var(--muted)}
+.recbox .det b{color:var(--ink);font-weight:500}
+.planlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px}
+.roofsvg{width:100%;height:auto;max-height:540px;display:block}
+.strleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;font-family:var(--f-mono);margin-top:8px}
+.strleg span{display:inline-flex;gap:6px;align-items:center}
+.strleg i{width:14px;height:10px;border-radius:2px;display:inline-block}
+.fanwrap{display:grid;grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:1150px){.fanwrap{grid-template-columns:minmax(0,1fr)}}
+.fan{position:relative;width:100%;max-width:560px;aspect-ratio:1/1}
+.fan canvas{width:100%;height:100%;cursor:crosshair;display:block}
+.fanleg{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.fanleg span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-family:var(--f-mono);padding-right:6px}
+.fanleg i{width:16px;height:12px;display:inline-block;border-radius:2px}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:12px;font-family:var(--f-mono);box-shadow:0 4px 14px rgba(0,0,0,.15);white-space:nowrap}
+.sel-info{font-family:var(--f-mono);font-size:13px;display:grid;grid-template-columns:auto auto;gap:3px 14px;justify-content:start}
+.rangebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.rangebar input[type=range]{flex:1;min-width:160px;accent-color:var(--sun)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border-left:3px solid var(--cell);padding:2px 10px}
+.stat .k{font-size:11.5px;color:var(--muted)} .stat .v{font-family:var(--f-mono);font-size:16px}
+.docs{font-size:13px;max-width:95ch}
+.docs h3{margin-top:14px}
+.docs ul{padding-left:18px;margin:6px 0}
+.docs li{margin:3px 0}
+.overlay{position:fixed;inset:0;background:rgba(10,16,22,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dialog{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;width:min(640px,100%);display:flex;flex-direction:column;gap:10px}
+.dialog textarea{min-height:220px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:6px;font-size:13px;z-index:60}
+
+.tipi{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font:600 10px/1 var(--f-body);font-style:normal;margin-left:6px;cursor:help;vertical-align:1px;text-transform:none;letter-spacing:0;flex:none}
+.tipi:hover,.tipi:focus-visible{border-color:var(--cell);color:var(--cell);outline:none}
+#tipbox{position:fixed;z-index:70;max-width:min(330px,calc(100vw - 24px));background:var(--ink);color:var(--panel);font-size:12.5px;line-height:1.45;padding:8px 11px;border-radius:6px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.22);text-transform:none;letter-spacing:0;font-weight:400}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="9" width="24" height="16" rx="1.5" fill="var(--cell)"/><path d="M1 14.3h24M1 19.6h24M9 9v16M17 9v16" stroke="var(--panel)" stroke-width="1"/><circle cx="20" cy="5" r="3.6" fill="var(--sun)"/></svg>
+    <h1>PV-Anlagenrechner</h1>
+    <span class="sub">Ertrag · Verschaltung · Speicher · Wirtschaftlichkeit</span>
+  </div>
+  <div class="toolbar">
+    <select class="preset" id="scenario" aria-label="Beispielszenario laden"></select>
+    <button class="btn" id="btnCopyParams" type="button">Parameter kopieren</button>
+    <button class="btn" id="btnLoadParams" type="button">Parameter einfügen</button>
+    <button class="btn" id="btnCsv" type="button">Ergebnisse als CSV kopieren</button>
+    <button class="btn" id="btnReset" type="button">Zurücksetzen</button>
+    <span class="status" id="status">–</span>
+  </div>
+</header>
+
+<main class="app">
+  <aside class="inputs" id="inputs"></aside>
+  <section class="results">
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="ov" aria-selected="true">Übersicht</button>
+      <button role="tab" data-tab="plan" aria-selected="false">Belegung &amp; Verschaltung</button>
+      <button role="tab" data-tab="yield" aria-selected="false">Ertrag &amp; Verluste</button>
+      <button role="tab" data-tab="self" aria-selected="false">Eigenverbrauch &amp; Speicher</button>
+      <button role="tab" data-tab="econ" aria-selected="false">Wirtschaftlichkeit</button>
+      <button role="tab" data-tab="orient" aria-selected="false">Ausrichtung &amp; Neigung</button>
+      <button role="tab" data-tab="sens" aria-selected="false">Sensitivität</button>
+      <button role="tab" data-tab="docs" aria-selected="false">Normen &amp; Annahmen</button>
+    </nav>
+
+    <div class="panel" data-panel="ov">
+      <div class="kpis" id="kpis"></div>
+      <div class="card"><h2>Empfehlung</h2><div class="rec" id="recBox"></div></div>
+      <div class="grid2">
+        <div class="card"><h2>Energiefluss Jahr 1</h2><div id="flowSvg"></div><div id="flows"></div></div>
+        <div class="card"><h2>Prüfhinweise</h2><ul class="warns" id="warns"></ul></div>
+      </div>
+      <div class="card"><h2>Anlagenkonfiguration</h2><div class="tablewrap"><table id="cfgTable"></table></div><p class="note" id="cfgNote"></p></div>
+      <div class="card"><h2>Stromkosten Jahr 1</h2><div class="tablewrap"><table id="costY1"></table></div></div>
+    </div>
+
+    <div class="panel" data-panel="plan" hidden>
+      <div class="card"><h2>Wechselrichter-Auslegung<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Geprüft werden alle hinterlegten Leistungsklassen und Gerätezahlen. Zulässig sind Konfigurationen mit DC/AC 0,7–1,45, eingehaltenen Spannungsgrenzen und genug MPP-Trackern. Gewählt wird die günstigste Variante aus Gerätepreis, Installationsaufwand und Abweichung vom Ziel-DC/AC.">i</span></h2><div id="invSummary"></div></div>
+      <div class="planlist" id="roofPlans"></div>
+      <div class="card"><h2>Übersichtsschaltplan</h2><div class="svgwrap" id="schematic"></div><p class="note">Vereinfachte einpolige Darstellung. DC-Überspannungsschutz Typ 2 je MPP-Tracker (häufig im Wechselrichter integriert). Schutzorgane, Leitungsschutz und Fehlerstromschutz nach Herstellerangaben und DIN VDE 0100-712 / -530 / -443 / -534 festlegen.</p></div>
+      <div class="card"><h2>Auslegungsprüfung je MPP-Tracker<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Prüft für jeden Wechselrichter-Eingang: Leerlaufspannung bei Kälte unter der Maximalspannung (sonst Geräteschaden), MPP-Spannung bei Hitze über der Untergrenze und bei Kälte unter der Obergrenze des MPP-Bereichs (sonst Ertragsverlust) sowie den Strom.">i</span></h2><div class="tablewrap"><table id="mpptTable"></table></div><p class="note" id="mpptNote"></p></div>
+      <div class="grid2">
+        <div class="card"><h2>DC-Leitungen</h2><div class="tablewrap"><table id="cableTable"></table></div></div>
+        <div class="card"><h2>Stückliste</h2><div class="tablewrap"><table id="bomTable"></table></div><p class="note">Mengen für Montage- und Kleinmaterial sind Schätzwerte für die Kostenplanung.</p></div>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="yield" hidden>
+      <div class="card"><h2>Monatliche Erzeugung und Verwendung</h2><div class="chartbox tall"><canvas id="chMonthly"></canvas></div></div>
+      <div class="grid2">
+        <div class="card"><h2>Verlustkaskade<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Zeigt Schritt für Schritt, wo zwischen der Sonneneinstrahlung auf die Module und dem nutzbaren Wechselstrom Energie verloren geht. Größte Hebel sind meist Temperatur, Reflexion und Verschattung.">i</span></h2><div class="tablewrap"><table class="casc" id="casc"></table></div><p class="note">Bezug: Einstrahlung in Modulebene × installierte Leistung (STC). PR nach DIN EN IEC 61724-1 ohne Abregelung.</p></div>
+        <div class="card"><h2>Jahresdauerlinie AC-Leistung<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Alle 8.760 Stundenwerte der Erzeugung, absteigend sortiert. Man sieht, in wie vielen Stunden die Anlage über der Wechselrichter-Leistung oder der Einspeisegrenze liegt. Hohe Leistungen treten nur in wenigen Stunden auf – deshalb ist eine Überdimensionierung (DC/AC über 1) wirtschaftlich.">i</span></h2><div class="chartbox"><canvas id="chDuration"></canvas></div><p class="note">Sortierte Stundenleistung aller Wechselrichter. Fläche oberhalb der Einspeisegrenze muss selbst verbraucht, gespeichert oder abgeregelt werden.</p></div>
+      </div>
+      <div class="card"><h2>Monatswerte</h2><div class="tablewrap"><table id="monthTable"></table></div></div>
+    </div>
+
+    <div class="panel" data-panel="self" hidden>
+      <div class="card">
+        <h2>Lastgang-Ansicht (7 Tage, Stundenwerte)</h2>
+        <div class="rangebar">
+          <button class="btn" type="button" data-week="20">Winter</button>
+          <button class="btn" type="button" data-week="105">Frühjahr</button>
+          <button class="btn" type="button" data-week="175">Sommer</button>
+          <button class="btn" type="button" data-week="270">Herbst</button>
+          <input type="range" id="weekStart" min="0" max="358" value="175" aria-label="Starttag">
+          <span class="status" id="weekLabel"></span>
+        </div>
+        <div class="chartbox tall"><canvas id="chWeek"></canvas></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h2>Deckung des Verbrauchs je Monat</h2><div class="chartbox"><canvas id="chCover"></canvas></div></div>
+        <div class="card"><h2>Speicherbetrieb</h2><div class="statgrid" id="batStats"></div><p class="note" id="batNote"></p></div>
+      </div>
+      <div class="card"><h2>Speichergröße im Vergleich<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Jede Zeile ist eine vollständige Simulation über den Betrachtungszeitraum mit dieser Speichergröße. Autarkie steigt mit der Größe immer weiter, der Kapitalwert hat meist ein Optimum bei kleineren Speichern.">i</span></h2><div class="grid2"><div class="chartbox"><canvas id="chBatStudy"></canvas></div><div class="tablewrap"><table id="batStudy"></table></div></div><p class="note">Gleiche Anlage, nur die Speicherkapazität variiert. Wirtschaftlichkeit über den gesamten Betrachtungszeitraum inkl. Speichertausch und Hybrid-Aufpreis des Wechselrichters.</p></div>
+    </div>
+
+    <div class="panel" data-panel="econ" hidden>
+      <div class="kpis" id="econKpis"></div>
+      <div class="card"><h2>Kumulierter Cashflow</h2><div class="chartbox tall"><canvas id="chCash"></canvas></div></div>
+      <div class="grid2">
+        <div class="card"><h2>Investition</h2><div class="tablewrap"><table id="invTable"></table></div></div>
+        <div class="card"><h2>Anlagengröße im Vergleich</h2><div class="chartbox"><canvas id="chSize"></canvas></div><p class="note">Belegung von 25–100 % der möglichen Modulfläche, Wechselrichter und Fixkosten passend skaliert bzw. konstant.</p></div>
+      </div>
+      <div class="card"><h2>Jahrestabelle</h2><div class="tablewrap"><table id="yearTable"></table></div></div>
+    </div>
+
+    <div class="panel" data-panel="orient" hidden>
+      <div class="card">
+        <h2>Einstrahlungsfächer<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Für jede Kombination aus Neigung und Himmelsrichtung wird die Jahreseinstrahlung am Standort berechnet und relativ zum Optimum dargestellt. In Deutschland liegt das Optimum bei ca. 30–38° Süd; Ost/West verliert ca. 15–20 %, aber über einen größeren Teil des Tages verteilt.">i</span></h2>
+        <div class="fanwrap">
+          <div>
+            <div class="fan" id="fanBox"><canvas id="fan"></canvas><div class="tip" id="fanTip" hidden></div></div>
+            <div class="fanleg" id="fanLeg"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+            <p class="note" style="margin:0">Draufsicht wie auf einer Karte (Norden oben). Abstand zur Mitte = Modulneigung (Mitte 0°, Rand 90°), Richtung = Ausrichtung der Modulfläche. Farbe = jährlich nutzbare Einstrahlung in Modulebene relativ zum Optimum, für Standort, Horizont und Albedo dieser Rechnung. Punkte = Ihre Dachflächen. Klick wählt eine Ausrichtung.</p>
+            <div class="sel-info" id="fanSel"></div>
+            <div class="chartbox short"><canvas id="chFanMonth"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h2>Ertrag nach Neigung</h2><div class="chartbox"><canvas id="chTilt"></canvas></div></div>
+        <div class="card"><h2>Ertrag nach Ausrichtung</h2><div class="chartbox"><canvas id="chAz"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="sens" hidden>
+      <div class="card"><h2>Einfluss auf den Kapitalwert<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Tornado-Diagramm: Je länger der Balken, desto stärker hängt das Ergebnis von dieser Annahme ab. Diese Werte sollten besonders sorgfältig geprüft werden.">i</span></h2><div class="chartbox tall"><canvas id="chTornado"></canvas></div><p class="note">Jede Größe einzeln variiert, alle anderen bleiben auf dem Ausgangswert.</p></div>
+      <div class="grid2">
+        <div class="card"><h2>Variationen</h2><div class="tablewrap"><table id="sensTable"></table></div></div>
+        <div class="card"><h2>Grenzwerte (Kapitalwert = 0)</h2><div class="tablewrap"><table id="beTable"></table></div></div>
+      </div>
+      <div class="card"><h2>Einfluss des Wetterjahres<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="Die Rechnung wird mit 10 verschiedenen synthetischen Wetterjahren wiederholt. Jahresstrahlung und Monatssummen bleiben gleich, nur die Abfolge sonniger und trüber Tage ändert sich. Das zeigt, wie stabil Eigenverbrauch, Autarkie und Speichernutzen gegenüber dem Wetterverlauf sind.">i</span></h2><div class="tablewrap"><table id="wxTable"></table></div><p class="note" id="wxNote"></p></div>
+    </div>
+
+    <div class="panel" data-panel="docs" hidden>
+      <div class="card docs" id="docs"></div>
+    </div>
+  </section>
+</main>
+
+<script id="core">
+"use strict";
+/* ===================== Rechenkern ===================== */
+const DEG=Math.PI/180;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const dn=(v,d)=>(+v).toFixed(d).replace('.',',');
+const DAYS_IN=[31,28,31,30,31,30,31,31,30,31,30,31];
+const MNAMES=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const MONTH_FRAC=[.026,.046,.080,.115,.136,.140,.142,.122,.089,.056,.029,.019];
+const MONTH_T=[0.9,1.5,4.6,8.9,12.9,16.1,18.0,17.6,13.9,9.4,4.9,1.7];
+const DAY_MONTH=new Uint8Array(365);(()=>{let d=0;for(let m=0;m<12;m++)for(let k=0;k<DAYS_IN[m];k++)DAY_MONTH[d++]=m})();
+const HOLI=new Set([0,84,87,120,125,136,146,275,304,358,359]);
+const SCHOOLFREE=(d)=>(d<=5)||(d>=80&&d<=92)||d===137||(d>=199&&d<=242)||(d>=283&&d<=295)||d>=356;
+const DOW=(d)=>(d+4)%7;
+const isDST=(d)=>d>=86&&d<303;
+const AZN=['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const azName=(a)=>AZN[Math.round(((a+180)%360+360)%360/22.5)%16];
+
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=r();if(u<1e-12)u=1e-12;const v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function erbs(k){if(k<=0.22)return 1-0.09*k;if(k<=0.8)return 0.9511-0.1604*k+4.388*k*k-16.638*k*k*k+12.336*k*k*k*k;return 0.165}
+
+/* Synthetisches stündliches Referenzjahr (Monatssummen exakt kalibriert) */
+function genWeather(lat,lon,ghiA,tmean,seed){
+  const N=8760,phi=lat*DEG,sp=Math.sin(phi),cp=Math.cos(phi);
+  const W={N,ghi:new Float64Array(N),dhi:new Float64Array(N),bhi:new Float64Array(N),ai:new Float64Array(N),cz:new Float64Array(N),az:new Float64Array(N),el:new Float64Array(N),ta:new Float64Array(N),kt:new Float64Array(365),ghiSum:0};
+  const dec=new Float64Array(365),E0=new Float64Array(365),eot=new Float64Array(365),wsA=new Float64Array(365),H0=new Float64Array(365);
+  for(let d=0;d<365;d++){
+    const G=2*Math.PI*d/365;
+    dec[d]=0.006918-0.399912*Math.cos(G)+0.070257*Math.sin(G)-0.006758*Math.cos(2*G)+0.000907*Math.sin(2*G)-0.002697*Math.cos(3*G)+0.00148*Math.sin(3*G);
+    E0[d]=1.000110+0.034221*Math.cos(G)+0.001280*Math.sin(G)+0.000719*Math.cos(2*G)+0.000077*Math.sin(2*G);
+    eot[d]=229.18*(0.000075+0.001868*Math.cos(G)-0.032077*Math.sin(G)-0.014615*Math.cos(2*G)-0.040849*Math.sin(2*G));
+    const ws=Math.acos(clamp(-Math.tan(phi)*Math.tan(dec[d]),-1,1));wsA[d]=ws;
+    H0[d]=24/Math.PI*1.361*E0[d]*(cp*Math.cos(dec[d])*Math.sin(ws)+ws*sp*Math.sin(dec[d]));
+  }
+  const r=rng((seed|0)*7919+101);let z=0;const kt=W.kt,ktm=new Float64Array(12);let d0=0;
+  for(let m=0;m<12;m++){
+    const n=DAYS_IN[m],Hm=ghiA*MONTH_FRAC[m];let h0s=0;for(let d=d0;d<d0+n;d++)h0s+=H0[d];
+    ktm[m]=Hm/h0s;
+    for(let d=d0;d<d0+n;d++){z=0.55*z+0.835*gauss(r);kt[d]=clamp(ktm[m]*(1+0.65*z),0.04,0.78)}
+    for(let it=0;it<6;it++){let s=0;for(let d=d0;d<d0+n;d++)s+=kt[d]*H0[d];const f=Hm/s;for(let d=d0;d<d0+n;d++)kt[d]=clamp(kt[d]*f,0.03,0.80)}
+    let s=0;for(let d=d0;d<d0+n;d++)s+=kt[d]*H0[d];const f=Hm/s;for(let d=d0;d<d0+n;d++)kt[d]*=f;
+    d0+=n;
+  }
+  const mid=[];{let s=0;for(let m=0;m<12;m++){mid.push(s+DAYS_IN[m]/2);s+=DAYS_IN[m]}}
+  const toff=tmean-9.2;
+  const tDay=(d)=>{let m=0;while(m<12&&mid[m]<=d)m++;const a=(m-1+12)%12,b=m%12;let da=mid[a],db=mid[b];if(m===0)da-=365;if(m===12)db+=365;const t=(d-da)/(db-da);return MONTH_T[a]*(1-t)+MONTH_T[b]*t+toff};
+  const rtv=new Float64Array(24),wv=new Float64Array(24);let tz=0;
+  for(let d=0;d<365;d++){
+    tz=0.7*tz+0.714*gauss(r);
+    const sd=Math.sin(dec[d]),cd=Math.cos(dec[d]),ws=wsA[d],cws=Math.cos(ws);
+    const a=0.409+0.5016*Math.sin(ws-Math.PI/3),b=0.6609-0.4767*Math.sin(ws-Math.PI/3),den=Math.sin(ws)-ws*cws;
+    let s=0;
+    for(let h=0;h<24;h++){
+      const ts=h+0.5+(lon-15)/15+eot[d]/60;const w=(ts-12)*15*DEG;wv[h]=w;const cw=Math.cos(w);
+      let v=0;if(cw>cws&&den>1e-6)v=(Math.PI/24)*(a+b*cw)*(cw-cws)/den;rtv[h]=v;s+=v;
+    }
+    const Hd=kt[d]*H0[d],m=DAY_MONTH[d];
+    const rel=kt[d]/ktm[m]-1,sw=Math.cos(2*Math.PI*(d-196)/365);
+    const Tday=tDay(d)+(sw>0?3.5*sw:3.0*sw)*clamp(rel,-1,1.2)+2.2*tz;
+    const amp=2+4*clamp(kt[d]/0.62,0,1);
+    for(let h=0;h<24;h++){
+      const i=d*24+h,G=s>0?rtv[h]/s*Hd:0,w=wv[h];
+      const cz=sp*sd+cp*cd*Math.cos(w);W.cz[i]=cz;W.el[i]=Math.asin(clamp(cz,-1,1))/DEG;
+      if(cz>0){const sz=Math.sqrt(1-cz*cz);const ca=clamp((cz*sp-sd)/(sz*cp),-1,1);W.az[i]=(w<0?-1:1)*Math.acos(ca)/DEG}
+      const I0=1.361*E0[d]*Math.max(cz,0);
+      const kth=I0>0.02?Math.min(G/I0,0.9):kt[d];
+      const Df=G*erbs(kth);
+      W.ghi[i]=G;W.dhi[i]=Df;W.bhi[i]=G-Df;W.ai[i]=I0>0.02?clamp((G-Df)/I0,0,1):0;W.ghiSum+=G;
+      W.ta[i]=Tday+amp*Math.cos(2*Math.PI*(h+0.5-15)/24);
+    }
+  }
+  return W;
+}
+const WCACHE=new Map();
+function getWeather(P){const k=[P.lat,P.lon,P.ghi,P.tmean,P.seed].join('|');if(!WCACHE.has(k)){if(WCACHE.size>6)WCACHE.clear();WCACHE.set(k,genWeather(P.lat,P.lon,P.ghi,P.tmean,P.seed))}return WCACHE.get(k)}
+
+function horizonFn(hv){
+  const H=hv.concat([hv[0]]);
+  const f=(az)=>{const p=(az+180)/45;const k=Math.min(7,Math.max(0,Math.floor(p)));const t=p-k;return H[k]*(1-t)+H[k+1]*t};
+  let s=0;for(let a=-180;a<180;a+=5){const h=f(a)*DEG;s+=Math.sin(h)**2}
+  return {f,sky:1-s/72};
+}
+const IAM_AR=0.16,IAM_N=1-Math.exp(-1/IAM_AR);
+const iam=(c)=>c<=0?0:(1-Math.exp(-c/IAM_AR))/IAM_N;
+
+/* Einstrahlung auf geneigte Fläche (Hay-Davies), Horizont, Reihenverschattung, IAM */
+function orient(W,tilt,azm,alb,hor,row,cb){
+  const b=tilt*DEG,g=azm*DEG,cbt=Math.cos(b),sbt=Math.sin(b),tb=Math.tan(b);
+  const td=(59.7-0.1388*tilt+0.001497*tilt*tilt)*DEG,tg=(90-0.5788*tilt+0.002693*tilt*tilt)*DEG;
+  const iD=iam(Math.cos(td)),iG=iam(Math.cos(tg)),fs=(1+cbt)/2,fg=(1-cbt)/2;
+  for(let i=0;i<W.N;i++){
+    const G=W.ghi[i];if(G<=0)continue;
+    const cz=W.cz[i],D=W.dhi[i],B=W.bhi[i],ai=W.ai[i];
+    let cth=0,daz=0;
+    if(cz>0){const sz=Math.sqrt(1-cz*cz);daz=W.az[i]*DEG-g;cth=cz*cbt+sz*sbt*Math.cos(daz)}
+    const rb=cth>0?cth/Math.max(cz,0.0872):0;
+    const beam=B*rb,circ=D*ai*rb,iso=D*(1-ai)*fs,gr=G*alb*fg;
+    const g0=beam+circ+iso+gr;
+    let k=1;
+    if(cz>0&&W.el[i]<hor.f(W.az[i]))k=0;
+    else if(row&&cz>0&&tilt>0){const c=Math.cos(daz);if(c>0.02){const tap=Math.tan(W.el[i]*DEG)/c;const fsh=clamp((row.ml*sbt-row.d*tap)/((tb+tap)*row.ml*cbt),0,1);k=1-Math.min(1,1.5*fsh)*row.frac}}
+    const b1=beam*k,c1=circ*k,i1=iso*hor.sky*(row?row.skyF:1);
+    const g1=b1+c1+i1+gr;
+    const g2=(b1+c1)*iam(cth)+i1*iD+gr*iG;
+    cb(i,g0,g1,g2);
+  }
+}
+
+const UC={sd:22,id:15,fs:27,fow:24};
+const MOUNT_LABEL={sd:'Schrägdach Aufdach',id:'Schrägdach Indach',fs:'Flachdach aufgeständert',fow:'Flachdach Ost-West'};
+const SHAPE_LABEL={rect:'Rechteck',trapez:'Trapez (Walmdach-Seite)',dreieck:'Dreieck (Walm / Zeltdach)'};
+
+/* Dachbelegung: Modulplätze je Reihe (Koordinaten in m, y ab Traufe/Ausrichtungsseite) */
+function layoutSurface(s,mod){
+  const g=0.02,portrait=s.orient!=='quer';
+  const mw=portrait?mod.B:mod.L,ml=portrait?mod.L:mod.B;
+  const pitched=s.mount==='sd'||s.mount==='id';
+  const shape=pitched?(s.shape||'rect'):'rect';
+  const L=Math.max(0,+s.len||0),Wd=Math.max(0,+s.wid||0),e=Math.max(0,+s.edge||0);
+  const top=shape==='rect'?L:shape==='dreieck'?0:clamp(+s.lenTop||0,0,L);
+  const poly=[[0,0],[L,0],[L/2+top/2,Wd],[L/2-top/2,Wd]];
+  const gross=(L+top)/2*Wd;
+  const fit=(avail)=>Math.max(0,Math.floor((avail+g)/(mw+g)));
+  const place=(cols,y0,h)=>{const tw=cols*mw+(cols-1)*g,x0=L/2-tw/2,a=[];for(let c=0;c<cols;c++)a.push({x:x0+c*(mw+g),y:y0,w:mw,h});return a};
+  let subs,row=null,pitch=0,desc='',slotArea=mw*ml;
+  if(pitched){
+    const k=shape==='rect'?1:Math.sqrt(1+((L-top)/2/Math.max(Wd,0.01))**2);
+    const rows=[];
+    for(let r=0;r<200;r++){const y0=e+r*(ml+g),y1=y0+ml;if(y1>Wd-e+1e-9)break;const wTop=L-(L-top)*y1/Math.max(Wd,1e-6);const cols=fit(wTop-2*e*k);if(cols<=0)break;rows.push(place(cols,y0,ml))}
+    subs=[{tilt:s.tilt,az:s.az,rows}];
+  } else if(s.mount==='fs'){
+    const b=s.tilt*DEG,amin=Math.max(5,s.amin||15)*DEG,dp=ml*Math.cos(b);
+    pitch=dp+ml*Math.sin(b)/Math.tan(amin);slotArea=mw*pitch;
+    const cols=fit(L-2*e),rows=[];
+    for(let r=0;r<400;r++){const y0=e+r*pitch;if(y0+dp>Wd-e+1e-9||cols<=0)break;rows.push(place(cols,y0,dp))}
+    const nr=rows.length;
+    if(nr>1)row={ml,d:pitch-dp,frac:(nr-1)/nr,skyF:1-0.06*(nr-1)/nr*Math.sin(b)/Math.sin(30*DEG)};
+    subs=[{tilt:s.tilt,az:s.az,rows}];
+  } else {
+    const b=s.tilt*DEG,dp=ml*Math.cos(b),gap=Math.max(0,s.gapOW??0.3),aN=Math.max(0,Math.round(s.aisleN||0)),aW=0.6;pitch=2*dp+gap;slotArea=mw*pitch/2;
+    const cols=fit(L-2*e),A=[],B=[];
+    for(let q=0;q<400;q++){const y0=e+q*pitch+(aN>0?Math.floor(q/aN)*aW:0);if(y0+2*dp>Wd-e+1e-9||cols<=0)break;A.push(place(cols,y0,dp));B.push(place(cols,y0+dp,dp))}
+    const nr=A.length;
+    // Gegenseitige Verschattung: First der Nachbar-Doppelreihe (Höhe ml·sin β) im Abstand dp+Spalt vor der Unterkante
+    if(nr>1&&s.tilt>0)row={ml,d:dp+gap,frac:(nr-1)/nr,skyF:1-0.05*(nr-1)/nr*Math.sin(b)/Math.sin(30*DEG)};
+    const a2=s.az+180>180?s.az-180:s.az+180;
+    subs=[{tilt:s.tilt,az:s.az,rows:A},{tilt:s.tilt,az:a2,rows:B}];
+  }
+  let cap=0,maxCols=0,nRows=0;
+  for(const u of subs){u.cap=u.rows.reduce((a,r)=>a+r.length,0);cap+=u.cap;for(const r of u.rows)maxCols=Math.max(maxCols,r.length);nRows=Math.max(nRows,u.rows.length);
+    u.slots=[];u.rows.forEach((r,i)=>{(i%2?r.slice().reverse():r).forEach(sl=>u.slots.push(sl))})}
+  const rem=Math.min(cap,Math.ceil(Math.max(0,+s.obst||0)/slotArea));
+  let n=cap-rem;if(s.manual>0)n=Math.round(s.manual);n=Math.max(0,n);
+  if(subs.length===2){subs[0].n=Math.ceil(n/2);subs[1].n=n-subs[0].n}else subs[0].n=n;
+  for(const u of subs)u.undrawn=Math.max(0,u.n-u.cap);
+  if(pitched)desc=`${nRows} Reihen, bis ${maxCols} Module je Reihe`;
+  else if(s.mount==='fs')desc=`${nRows} Reihen × ${maxCols} Module, Reihenabstand ${dn(pitch,2)} m`;
+  else desc=`${nRows} Doppelreihen × ${maxCols} Module, Spalt ${dn(s.gapOW??0.3,2)} m${s.aisleN>0?`, Wartungsgang alle ${Math.round(s.aisleN)} Reihen`:''}`;
+  return {n,cap,rows:nRows,cols:maxCols,subs,row,desc,pitch,grossArea:gross,modArea:n*mod.area,poly,edge:e,mw,ml,L,Wd,shape,pitched,g};
+}
+
+/* Wechselrichter-Katalog (generische Leistungsklassen, Richtpreise 2026 netto) */
+const INV_CAT=[
+ [1,3.0,2,1,16,600,90,560,850],[1,3.6,2,1,16,600,90,560,900],[1,4.6,2,1,16,600,90,560,1050],
+ [3,5,2,1,16,1000,160,950,1250],[3,6,2,1,16,1000,160,950,1350],[3,8,2,1,16,1000,160,950,1550],[3,10,2,1,16,1000,160,950,1750],[3,12,2,1,16,1000,160,950,1950],
+ [3,15,2,2,32,1000,160,950,2300],[3,20,2,2,32,1000,160,950,2700],[3,25,3,2,32,1000,180,950,3100],[3,30,3,2,32,1000,180,950,3400],
+ [3,36,4,2,32,1100,180,1000,3700],[3,40,4,2,32,1100,180,1000,3900],[3,50,5,2,32,1100,180,1000,4400],[3,60,6,2,32,1100,180,1000,5000],
+ [3,75,8,2,32,1100,180,1000,5700],[3,100,10,2,32,1100,180,1000,7000],[3,110,10,2,32,1100,180,1000,7500],[3,125,12,2,32,1100,180,1000,8300]
+].map(a=>({ph:a[0],kw:a[1],mppt:a[2],spm:a[3],imax:a[4],vmax:a[5],vmin:a[6],vmpmax:a[7],price:a[8],hyb:a[1]<=30,cls:a[1]<=4.6?'einphasig':a[1]<=30?'dreiphasig, Wohngebäude':'dreiphasig, Gewerbe'}));
+
+function strVolt(mod,P){return {voC:mod.voc*(1+mod.bv*(P.tmin-25)),vmpC:mod.vmp*(1+mod.bv*(P.tmin-25)),vmpH:mod.vmp*(1+mod.bv*(70-25))}}
+/* Stringplanung für n Module an Wechselrichtertyp t */
+function planStrings(n,mod,t,P){
+  const V=strVolt(mod,P);
+  const maxSer=Math.max(1,Math.min(Math.floor(t.vmax/V.voC),Math.floor(t.vmpmax/V.vmpC)));
+  const minSer=Math.max(1,Math.ceil(t.vmin/V.vmpH));
+  const par=Math.max(1,Math.min(t.spm,Math.floor(t.imax/mod.imp+1e-9)));
+  if(n<=0)return {lens:[],mppt:0,par,maxSer,minSer,ok:true};
+  const need=(lens)=>{const m=new Map();for(const l of lens)m.set(l,(m.get(l)||0)+1);let s=0;for(const c of m.values())s+=Math.ceil(c/par);return s};
+  let best=null;
+  const consider=(lens,ok)=>{const mp=need(lens);const sc=mp*10+lens.length+(new Set(lens).size-1)*0.5+(ok?0:1000);if(!best||sc<best.sc)best={lens,mppt:mp,sc,ok}};
+  const ns0=Math.max(1,Math.ceil(n/maxSer));
+  const split=(ns)=>{const b=Math.floor(n/ns),r=n%ns,a=[];for(let i=0;i<ns;i++)a.push(i<r?b+1:b);return a};
+  if(n<minSer)consider([n],false);
+  else for(let ns=ns0;ns<=ns0+6;ns++){const lens=split(ns);if(lens[lens.length-1]<minSer)break;if(lens[0]>maxSer)continue;consider(lens,true)}
+  if(!best)consider(split(ns0),false);
+  return {lens:best.lens,mppt:best.mppt,ok:best.ok,par,maxSer,minSer};
+}
+
+/* Wechselrichter-Auslegung: Typ, Anzahl, MPPT-Belegung, Strings */
+function designInverters(P,mod,groups,kWp){
+  const manual=P.invMode==='manual';
+  const batDC=!!P.batOn&&P.feedMode!=='voll'&&P.batCoupling==='DC';
+  const target=kWp/Math.max(0.5,P.dcac);
+  const dcac=Math.max(0.5,P.dcac);
+  if(!groups.length){const t=manual?null:INV_CAT[3];const u={kw:t?t.kw:(P.pacInv||1),t:t||INV_CAT[3],mppts:[],dc:0};return {units:[u],k:1,t:u.t,strings:[],groupStrings:[],frac:[[]],pacN:u.kw,r:0,okV:true,manual,alts:[],V:strVolt(mod,P),plans:[],hybFallback:false,overflow:false}}
+  let types;
+  if(manual)types=[{ph:P.invPhase==='1'?1:3,kw:Math.max(0.3,+P.pacInv||1),mppt:Math.max(1,Math.round(P.mpptN)),spm:Math.max(1,Math.round(P.spmMax)),imax:P.imppt,vmax:P.vmaxInv,vmin:P.vmppMin,vmpmax:P.vmppMax,price:P.invPrice,hyb:P.batCoupling==='DC',cls:'manuell',manual:true}];
+  else types=INV_CAT;
+  const evalT=(requireHyb,relax)=>{
+    const out=[];
+    for(const t of types){
+      if(!manual){if(t.ph===1&&target>4.6)continue;if(requireHyb&&!t.hyb)continue}
+      const plans=groups.map(gr=>planStrings(gr.n,mod,t,P));
+      const need=plans.reduce((a,p)=>a+p.mppt,0),okV=plans.every(p=>p.ok);
+      const ks=manual?[Math.max(1,Math.round(P.invCount))]:(relax?[1,2,3,4,5,6,8,10,12,16,20]:[1,2,3,4,5,6,8,10]);
+      for(const k of ks){
+        const r=kWp/(k*t.kw),fitM=need<=k*t.mppt;
+        if(!manual&&!relax&&(r>1.45||r<0.7))continue;
+        if(!manual&&!fitM)continue;
+        const cost=k*t.price+k*400+3000*Math.abs(r-dcac)+(okV?0:20000)+(relax?5000*Math.max(0,r-1.45,0.7-r):0);
+        out.push({t,k,plans,need,okV,r,cost,fitM});
+      }
+    }
+    return out.sort((a,b)=>a.cost-b.cost);
+  };
+  let hybFallback=false,cands=evalT(batDC,false);
+  if(!cands.length&&batDC&&!manual){cands=evalT(false,false);hybFallback=true}
+  if(!cands.length)cands=evalT(batDC&&!hybFallback,true);
+  if(!cands.length&&!manual){const t=INV_CAT[INV_CAT.length-1];const k=Math.max(1,Math.ceil(target/t.kw));cands=[{t,k,plans:groups.map(gr=>planStrings(gr.n,mod,t,P)),okV:false,r:kWp/(k*t.kw),cost:0,fitM:false}]}
+  const C=cands[0];
+  // MPPT-Eingänge bilden
+  const inputs=[];
+  groups.forEach((gr,gi)=>{const p=C.plans[gi];const m=new Map();for(const l of p.lens)m.set(l,(m.get(l)||0)+1);
+    for(const [len,cnt] of [...m.entries()].sort((a,b)=>b[0]-a[0]))for(let i=0;i<cnt;i+=p.par){const c=Math.min(p.par,cnt-i);inputs.push({g:gi,len,cnt:c,kWp:len*c*mod.p/1000})}});
+  const units=[];for(let j=0;j<C.k;j++)units.push({kw:C.t.kw,t:C.t,mppts:[],dc:0});
+  let overflow=false;
+  inputs.map((x,i)=>i).sort((a,b)=>inputs[b].kWp-inputs[a].kWp||inputs[a].g-inputs[b].g).forEach(ii=>{
+    const inp=inputs[ii];let best=-1,bv=1e9;
+    for(let j=0;j<units.length;j++){if(units[j].mppts.length>=C.t.mppt)continue;const v=(units[j].dc+inp.kWp)/units[j].kw;if(v<bv-1e-9){bv=v;best=j}}
+    if(best<0){overflow=true;best=units.reduce((a,u,i)=>u.dc/u.kw<units[a].dc/units[a].kw?i:a,0);inp.over=true}
+    units[best].mppts.push(inp);units[best].dc+=inp.kWp;
+  });
+  const strings=[],groupStrings=groups.map(()=>[]),frac=units.map(()=>groups.map(()=>0));
+  let ci=0;
+  units.forEach((u,j)=>{u.mppts.sort((a,b)=>a.g-b.g||b.len-a.len);u.mppts.forEach((m,mi)=>{
+    m.letter=String.fromCharCode(65+mi);m.inv=j;m.strings=[];
+    for(let s=0;s<m.cnt;s++){const st={id:(units.length>1?(j+1)+'.':'')+m.letter+(s+1),len:m.len,g:m.g,inv:j,mppt:m.letter,ci:ci++,m};m.strings.push(st);strings.push(st);groupStrings[m.g].push(st)}
+    frac[j][m.g]+=m.len*m.cnt/groups[m.g].n;
+  })});
+  return {units,k:C.k,t:C.t,strings,groupStrings,frac,pacN:C.k*C.t.kw,r:C.r,okV:C.okV,manual,alts:cands.slice(0,5),V:strVolt(mod,P),plans:C.plans,hybFallback,overflow,target};
+}
+
+const STD_BAT=[2.5,5,6,7.5,8,10,12,12.5,15,17.5,20,25,30,40,50,60,75,100,125,150,200,250,300,400,500];
+function niceBatUp(c){if(c<1.5)return 0;if(c>500)return Math.ceil(c/50)*50;return STD_BAT.find(x=>x>=c-0.05)||STD_BAT[STD_BAT.length-1]}
+function niceBat(c){if(c<2)return 0;if(c>500)return Math.round(c/50)*50;let b=STD_BAT[0];for(const x of STD_BAT)if(Math.abs(x-c)<Math.abs(b-c))b=x;return b}
+
+/* Lastprofile */
+const H0W=[70,56,50,48,48,55,90,130,140,135,135,145,170,165,145,135,145,185,225,235,215,190,155,110];
+const H0S=[80,62,54,51,51,56,85,115,125,125,125,135,155,150,130,120,120,135,155,160,165,175,160,115];
+function dayShape(type,d){
+  const dow=DOW(d),hol=HOLI.has(d),sun=dow===6||hol,sat=dow===5&&!hol;
+  const w=(Math.cos(2*Math.PI*(d-15)/365)+1)/2;const out=new Array(24);
+  if(type==='H0'){
+    for(let h=0;h<24;h++){let v=w*H0W[h]+(1-w)*H0S[h];
+      if(sat){if(h>=6&&h<=8)v*=0.85;else if(h>=9&&h<=13)v*=1.2;else if(h>=14&&h<=17)v*=1.1}
+      if(sun){if(h>=6&&h<=8)v*=0.65;else if(h>=9&&h<=10)v*=1.15;else if(h>=11&&h<=13)v*=1.35;else if(h>=14&&h<=17)v*=1.1}
+      out[h]=v}
+    const t=d+1,F=-3.92e-10*t**4+3.2e-7*t**3-7.02e-5*t**2+2.1e-3*t+1.24;for(let h=0;h<24;h++)out[h]*=F;
+  } else if(type==='G1'){
+    const wd=[.32,.3,.3,.3,.32,.4,.55,.8,1,1,1,1,.9,.95,1,1,.95,.75,.5,.4,.35,.33,.32,.32];
+    for(let h=0;h<24;h++)out[h]=(sun||sat?0.28:wd[h])*(1+0.15*w);
+  } else if(type==='SCH'){
+    const wd=[.25,.24,.24,.24,.25,.3,.45,.7,1,1,1,1,.95,.85,.7,.55,.45,.4,.42,.42,.38,.3,.27,.25];
+    const off=sun||sat||SCHOOLFREE(d);
+    for(let h=0;h<24;h++)out[h]=(off?0.22:wd[h])*(1+0.25*w);
+  } else {
+    const wd=[.35,.35,.35,.35,.36,.42,.55,.75,.95,1,1,1,.95,.95,1,1,.95,.85,.65,.5,.42,.38,.36,.35];
+    const sa=[.35,.35,.35,.35,.35,.37,.45,.6,.7,.72,.72,.7,.65,.5,.42,.4,.38,.37,.36,.36,.35,.35,.35,.35];
+    for(let h=0;h<24;h++)out[h]=(sun?0.3:sat?sa[h]:wd[h])*(1+0.1*w);
+  }
+  return out;
+}
+function parseProfile(txt,unit){
+  if(!txt||!txt.trim())return null;
+  const vals=[];
+  for(const line of txt.split(/\r?\n/)){
+    const t=line.trim();if(!t)continue;
+    const parts=t.split(/[;\t]+/);
+    const toks=parts.length>1?parts:t.split(/\s+/);
+    for(let j=(parts.length>1?toks.length-1:0);j<toks.length;j++){
+      let s=toks[j].trim();if(!s)continue;
+      if(s.includes(',')&&!s.includes('.'))s=s.replace(',','.');else if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');
+      const v=parseFloat(s);if(isFinite(v))vals.push(v);
+    }
+  }
+  let out=null;
+  if(vals.length>=8760&&vals.length<8790){out=new Float64Array(8760);for(let i=0;i<8760;i++)out[i]=vals[i]}
+  else if(vals.length>=35040&&vals.length<35140){out=new Float64Array(8760);for(let i=0;i<8760;i++){let s=0;for(let q=0;q<4;q++)s+=vals[i*4+q];out[i]=unit==='kW'?s/4:s}}
+  return {data:out,n:vals.length};
+}
+function buildLoad(P,W){
+  const L=new Float64Array(8760);let custom=null;
+  if(P.profile==='CUSTOM'){custom=parseProfile(P.customData,P.customUnit);if(custom&&custom.data)L.set(custom.data)}
+  if(!(custom&&custom.data)){
+    const type=P.profile==='CUSTOM'?'H0':P.profile;let s=0;
+    for(let d=0;d<365;d++){const sh=dayShape(type,d),sh2=dayShape(type,(d+1)%365),dst=isDST(d);
+      for(let h=0;h<24;h++){const hc=h+(dst?1:0);L[d*24+h]=hc<24?sh[hc]:sh2[hc-24];s+=L[d*24+h]}}
+    const f=P.annual/s;for(let i=0;i<8760;i++)L[i]*=f;
+  }
+  const hp=new Float64Array(8760);
+  if(P.hpKwh>0){
+    let sH=0;for(let i=0;i<8760;i++){hp[i]=Math.max(0,15-W.ta[i]);sH+=hp[i]}
+    const dhw=[.3,.25,.25,.25,.3,.6,1.4,1.6,1.2,.9,.8,.8,.9,.8,.7,.7,.8,1,1.3,1.5,1.4,1.1,.7,.4];let sD=0;for(const v of dhw)sD+=v;
+    const fH=sH>0?0.82*P.hpKwh/sH:0,fD=0.18*P.hpKwh/(365*sD);
+    for(let i=0;i<8760;i++)hp[i]=hp[i]*fH+dhw[i%24]*fD;
+  }
+  return {L,hp,custom};
+}
+
+/* Modellaufbau */
+function buildModel(P){
+  const W=getWeather(P);
+  const mod={p:P.pmod,L:P.modL/1000,B:P.modB/1000,gam:P.gamma/100,bv:P.betaVoc/100,voc:P.voc,vmp:P.vmp,imp:P.imp,isc:P.isc};
+  mod.area=mod.L*mod.B;mod.eff=mod.p/1000/mod.area;
+  const hor=horizonFn([P.hN,P.hNO,P.hO,P.hSO,P.hS,P.hSW,P.hW,P.hNW]);
+  const surfs=[],groups=[];
+  for(const s of P.surfaces){
+    const lay=layoutSurface(s,mod);const res={s,lay,kWp:lay.n*mod.p/1000,subs:[]};
+    lay.subs.forEach((u,ui)=>{if(u.n>0)groups.push({si:surfs.length,ui,n:u.n,tilt:u.tilt,az:u.az,row:lay.row,mount:s.mount,near:+s.near||0,name:s.name})});
+    surfs.push(res);
+  }
+  const nMod=groups.reduce((a,g)=>a+g.n,0),kWp=nMod*mod.p/1000;
+  const D=designInverters(P,mod,groups,kWp);
+  const Rs=0.0214*2*P.dcLen/P.dcCs;
+  const Ls={poa:0,hor:0,iam:0,soil:0,near:0,ll:0,temp:0,mm:0,dc:0};
+  const pdcG=[];
+  const soil=P.soil/100,mm=Math.max(0,P.mismatch/100-(P.optim?0.004:0)),gam=mod.gam;
+  groups.forEach((gr,gi)=>{
+    let pl=0,pw=0;for(const st of D.groupStrings[gi]){pl+=mod.imp*mod.imp*Rs;pw+=st.len*mod.p}
+    const dcRel=pw>0?pl/pw:0;gr.dcRel=dcRel;
+    const kWpG=gr.n*mod.p/1000,arr=new Float64Array(8760);
+    const near=(gr.near/100)*(P.optim?0.5:1),uc=UC[gr.mount]||22,kT=0.9*(1-mod.eff)/uc*1000;
+    let poa=0,dcE=0;
+    orient(W,gr.tilt,gr.az,P.albedo,hor,gr.row,(i,g0,g1,g2)=>{
+      const g3=g2*(1-soil),g4=g3*(1-near);
+      const ll=g4>0.003?Math.min(1,1+0.018*Math.log(g4)):0;
+      const p5=g4*ll,tc=W.ta[i]+kT*g4,p6=p5*(1+gam*(tc-25)),p7=p6*(1-mm),p8=p7*(1-dcRel*g4);
+      arr[i]=p8*kWpG;poa+=g0;dcE+=p8*kWpG;
+      Ls.poa+=g0*kWpG;Ls.hor+=(g0-g1)*kWpG;Ls.iam+=(g1-g2)*kWpG;Ls.soil+=(g2-g3)*kWpG;Ls.near+=(g3-g4)*kWpG;Ls.ll+=(g4-p5)*kWpG;Ls.temp+=(p5-p6)*kWpG;Ls.mm+=(p6-p7)*kWpG;Ls.dc+=(p7-p8)*kWpG;
+    });
+    gr.kWp=kWpG;gr.poa=poa;gr.dcE=dcE;pdcG.push(arr);
+    surfs[gr.si].subs.push(gr);
+  });
+  const invs=D.units.map((u,j)=>{const a=new Float64Array(8760);groups.forEach((gr,gi)=>{const f=D.frac[j]?D.frac[j][gi]:0;if(f>0){const src=pdcG[gi];for(let i=0;i<8760;i++)a[i]+=f*src[i]}});return {kw:u.kw,pdc:a}});
+  const ld=buildLoad(P,W);
+  const load=new Float64Array(8760);for(let i=0;i<8760;i++)load[i]=ld.L[i]+ld.hp[i];
+  const evDaily=P.evOn&&P.evKm>0?P.evKm/365*P.evCons/100:0;
+  const order=[5,6,4,2,0,1,3],homeSet=new Set(order.slice(0,clamp(Math.round(P.evHome),0,7)));
+  const evHome=new Uint8Array(365);for(let d=0;d<365;d++)evHome[d]=homeSet.has(DOW(d))||HOLI.has(d)?1:0;
+  const neg=new Uint8Array(8760);
+  if(P.negHours>0){
+    const rn=rng(4242),idx=[];for(let i=0;i<8760;i++){const d=Math.floor(i/24),m=DAY_MONTH[d];if(m>=2&&m<=8&&W.ghi[i]>0.3){const we=DOW(d)>=5||HOLI.has(d);idx.push([W.ghi[i]*(we?1.35:1)*(0.55+0.9*rn()),i])}}
+    idx.sort((a,b)=>b[0]-a[0]);for(let k=0;k<Math.min(P.negHours,idx.length);k++)neg[idx[k][1]]=1;
+  }
+  const tariff=P.tariffOv>0?P.tariffOv:eegTariff(kWp,P.feedMode);
+  const hybCap=!!(D.units[0]&&D.units[0].t.hyb);
+  return {P,W,mod,hor,Ls,surfs,groups,D,invs,nMod,kWp,pacN:D.pacN,load,loadBase:ld.L,hp:ld.hp,custom:ld.custom,evDaily,evHome,evPow:P.evPow,evMin:1.4,evStrat:P.evStrat,neg,tariff,
+    flimKW:P.feedLimit/100*kWp,beta:clamp(P.peakShare/100,0,0.9),feedMode:P.feedMode,etaMax:P.etaMax/100,acLoss:P.acLoss/100,
+    batUsable:P.batUsable/100,batFade:P.batFade/100,batPow:P.batPow,batEta:P.batEta/100,batReserve:P.batReserve/100,batStandby:P.batStandby,
+    hybCap,batDC:P.batCoupling==='DC'&&hybCap,batGrid:!!P.batGrid,Rs};
+}
+function eegTariff(kWp,mode){
+  if(mode==='keine')return 0;
+  const T=mode==='voll'?[[10,12.22],[40,10.24],[100,10.24]]:[[10,7.70],[40,6.66],[100,5.44]];
+  let rest=kWp,lo=0,sum=0;
+  for(const [hi,ct] of T){const part=Math.max(0,Math.min(rest,hi-lo));sum+=part*ct;rest-=part;lo=hi}
+  if(rest>0)sum+=rest*T[2][1];
+  return kWp>0?sum/kWp:T[0][1];
+}
+
+/* Jahressimulation (8760 h) */
+function simYear(M,o){
+  const N=8760,degF=o.degF,sc=o.scale||1,yf=o.yieldF||1;
+  const invs=M.invs,nI=invs.length,kwS=invs.map(u=>u.kw*sc);
+  const flim=M.flimKW*sc,etaM=M.etaMax,acl=M.acLoss,volle=M.feedMode==='voll';
+  const capN=o.batCap||0,bat=capN>0&&!volle;
+  const cap=bat?capN*M.batUsable*Math.max(0.5,1-M.batFade*(o.batAge||0)):0;
+  const pB=bat?(o.batPow!=null?o.batPow:M.batPow):0;
+  const ec=Math.sqrt(M.batEta),smin=cap*M.batReserve,stby=M.batStandby/1000,dcB=M.batDC,gf=M.batGrid;
+  let soc=bat?Math.max(smin,cap*0.3):0;
+  const col=o.collect;
+  const H=col?{pv:new Float32Array(N),load:new Float32Array(N),grid:new Float32Array(N),feed:new Float32Array(N),curt:new Float32Array(N),soc:new Float32Array(N),bin:new Float32Array(N),bout:new Float32Array(N)}:null;
+  const mk=()=>new Float64Array(12);
+  const mo={pv:mk(),dir:mk(),bin:mk(),bout:mk(),feed:mk(),curt:mk(),grid:mk(),load:mk(),dc:mk()};
+  const S={pv:0,self:0,dir:0,bin:0,bout:0,feed:0,unpaid:0,curt:0,grid:0,load:0,clipLoss:0,invLoss:0,acLoss:0,degLoss:0,evPV:0,ev:0,stby:0,dcIn:0,cap};
+  const evPVs=M.evStrat==='pv',evD=M.evDaily,evP=M.evPow,load=M.load,lb=M.loadBase,neg=M.neg,beta=M.beta;
+  let i=0;
+  for(let d=0;d<365;d++){
+    let evRem=evD;const home=M.evHome[d],m=DAY_MONTH[d];
+    for(let h=0;h<24;h++,i++){
+      let ac=0,clip=0,p0=0,pdcT=0;
+      for(let j=0;j<nI;j++){const q=invs[j].pdc[i];if(q<=0)continue;const q0=q*yf*sc;p0+=q0;const pdc=q0*degF;pdcT+=pdc;const pac=kwS[j],x=pdc/pac;
+        if(x>0.003){const eta=Math.max(0,etaM-0.0010/x-0.008*x);let raw=pdc*eta;S.invLoss+=pdc-raw;if(raw>pac){clip+=raw-pac;raw=pac}ac+=raw}else S.invLoss+=pdc}
+      S.degLoss+=p0-pdcT;S.dcIn+=pdcT;mo.dc[m]+=pdcT;
+      const al=ac*acl;S.acLoss+=al;ac-=al;
+      const L0=load[i],lbi=lb[i],pb=L0-beta*lbi,pk=pb+beta*lbi/0.15;
+      let evPVh=0,evEve=0;
+      if(evRem>1e-9){
+        if(evPVs&&home&&h>=9&&h<=16){const sur=ac-L0-beta*lbi;if(sur>=M.evMin){evPVh=Math.min(sur,evP,evRem);evRem-=evPVh}}
+        if(h>=18&&h<=22){evEve=Math.min(evP,evRem/(23-h));evRem-=evEve}
+      }
+      const Lt=L0+evPVh+evEve;S.load+=Lt;S.ev+=evPVh+evEve;S.evPV+=evPVh;mo.load[m]+=Lt;
+      let feed=0,curt=0,grid=0,bin=0,bout=0,used=0,dir=0;
+      if(volle){feed=Math.min(ac,flim);curt=ac-feed;grid=Lt}
+      else{
+        const dh=beta>0?0.85*Math.min(ac,pb)+0.15*Math.min(ac,pk):Math.min(ac,L0);
+        dir=dh+evPVh;let sur=ac-dir,def=L0-dh;
+        const evFromPV=Math.min(sur,evEve);dir+=evFromPV;sur-=evFromPV;const evGrid=evEve-evFromPV;
+        if(bat){
+          const avail=(gf&&h<11)?Math.max(0,sur-flim):sur;
+          let cc=Math.min(pB,(cap-soc)/ec);
+          if(dcB&&clip>0){used=Math.min(clip,cc);clip-=used;cc-=used}
+          const fs=Math.min(avail,Math.max(0,cc));
+          bin=used+fs;soc+=bin*ec;sur-=fs;
+          if(def>0){const can=Math.max(0,soc-smin)*ec;
+            const want=beta>0?Math.min(0.85*Math.max(0,pb-ac),0.85*pB)+Math.min(0.15*Math.max(0,pk-ac),0.15*pB):Math.min(def,pB);
+            bout=Math.min(def,want,can);soc-=bout/ec;def-=bout}
+          if(soc>stby){soc-=stby;S.stby+=stby}
+        }
+        feed=Math.min(sur,flim);curt=sur-feed;grid=def+evGrid;
+      }
+      S.clipLoss+=clip;
+      const pv=ac+used;
+      S.pv+=pv;S.dir+=dir;S.bin+=bin;S.bout+=bout;S.feed+=feed;S.curt+=curt;S.grid+=grid;if(neg[i])S.unpaid+=feed;
+      mo.pv[m]+=pv;mo.dir[m]+=dir;mo.bin[m]+=bin;mo.bout[m]+=bout;mo.feed[m]+=feed;mo.curt[m]+=curt;mo.grid[m]+=grid;
+      if(col){H.pv[i]=pv;H.load[i]=Lt;H.grid[i]=grid;H.feed[i]=feed;H.curt[i]=curt;H.soc[i]=cap>0?soc/cap:0;H.bin[i]=bin;H.bout[i]=bout}
+    }
+  }
+  S.self=S.pv-S.feed-S.curt;S.mo=mo;S.H=H;
+  S.evq=S.pv>0?S.self/S.pv:0;S.aut=S.load>0?1-S.grid/S.load:0;
+  return S;
+}
+
+/* Speicherempfehlung (technisch) */
+function recBattery(M,P){
+  if(M.nMod===0||M.feedMode==='voll')return {cap:0,pow:0,usable:0,night:0};
+  const r=simYear(M,{degF:1-P.lid/100,batCap:0,collect:true}),H=r.H;
+  const use=[],eve=[],night=[];
+  for(let d=90;d<273;d++){
+    let sur=0,def=0;
+    for(let h=0;h<24;h++){const i=d*24+h;sur+=H.feed[i]+H.curt[i]}
+    for(let k=15;k<33;k++){const i=d*24+k;if(i>=8760)break;const x=H.load[i]-H.pv[i];if(x>0){def+=x;if(k>=17&&k<=22)eve.push(x)}}
+    night.push(def);use.push(Math.min(def,sur*0.92));
+  }
+  const q=(a,p)=>{const b=a.slice().sort((x,y)=>x-y);return b.length?b[Math.min(b.length-1,Math.floor(p*(b.length-1)))]:0};
+  const usable=q(use,0.75);
+  let cap=Math.min(usable/Math.max(0.5,P.batUsable/100),1.5*M.kWp);
+  cap=cap>1.5*M.kWp-0.01?niceBat(cap):niceBatUp(cap);
+  const pow=cap>0?Math.max(2.5,Math.ceil(Math.max(0.4*cap,q(eve,0.95)*1.1)*2)/2):0;
+  return {cap,pow,usable,night:q(night,0.5)};
+}
+
+function investment(M,P,sc,batCap){
+  const n=Math.max(0,Math.round(M.nMod*sc)),kWp=n*P.pmod/1000,v=1+P.vat/100,D=M.D;
+  const withBat=batCap>0&&P.feedMode!=='voll';
+  const hybF=(withBat&&P.batCoupling==='DC'&&M.hybCap&&!D.manual)?1.4:1;
+  let invCost=M.nMod>0?D.units.reduce((a,u)=>a+u.t.price,0)*(D.manual?1:P.invPriceF/100*hybF)*(sc<1?Math.pow(sc,0.6):1):0;
+  const invLabel=`Wechselrichter (${D.k} × ${dn(D.t.kw,1)} kW${hybF>1?', Hybrid':''})`;
+  let items;
+  if(P.costLump>0)items=[['PV-Anlage inkl. Wechselrichter (Pauschalangebot)',P.costLump*sc]];
+  else items=[['PV-Module',n*P.modPrice],[invLabel,invCost],['Montagesystem',kWp*P.costMount],['Montage & Installation',kWp*P.costInst],['Leistungsoptimierer',P.optim?n*P.costOpt:0],['Elektro / Zählerschrank / ÜSS',P.costElec],['Gerüst / Absturzsicherung',P.costScaff],['Planung & Netzanmeldung',P.costPlan]];
+  if(P.costLump>0&&hybF>1){const add=invCost*(1-1/hybF);items.push(['Aufpreis Hybrid-Wechselrichter',add])}
+  const bat=withBat?batCap*P.batPrice:0;
+  if(bat>0)items.push(['Batteriespeicher',bat]);
+  items=items.filter(x=>x[1]>0).map(([k,x])=>[k,x*v]);
+  const total=items.reduce((a,b)=>a+b[1],0);
+  return {items,total,bat:bat*v,inv:invCost*v,kWp,n};
+}
+
+function irr(cfs){
+  const f=(r)=>cfs.reduce((a,c,t)=>a+c/Math.pow(1+r,t),0);
+  let lo=-0.95,hi=1.0,flo=f(lo),fhi=f(hi);
+  if(isNaN(flo)||isNaN(fhi)||flo*fhi>0)return null;
+  for(let k=0;k<200;k++){const mid=(lo+hi)/2,fm=f(mid);if(Math.abs(fm)<1e-7)return mid;if(flo*fm<0){hi=mid;fhi=fm}else{lo=mid;flo=fm}}
+  return (lo+hi)/2;
+}
+
+/* Wirtschaftlichkeit (Eigenkapitalsicht) */
+function econ(M,P,ov){
+  ov=ov||{};
+  const N=P.years,iR=(P.discount+(ov.discAdd||0))/100;
+  const batCap=ov.batCap!=null?ov.batCap:(P.batOn?P.batCap:0);
+  const batPow=ov.batPow!=null?ov.batPow:null;
+  const sc=ov.scale||1;
+  const inv=investment(M,P,sc,batCap);const I=inv.total*(ov.investF||1);
+  const price0=P.price/100*(ov.priceF||1),inc=(P.priceInc+(ov.incAdd||0))/100;
+  const tariff=(M.feedMode==='keine'?0:M.tariff/100)*(ov.tariffF||1),post=(M.feedMode==='keine'?0:P.postTariff/100)*(ov.tariffF||1);
+  const loan=I*P.loanShare/100,q=1+P.loanRate/100,nL=Math.max(1,P.loanYears);
+  const ann=loan>0?(P.loanRate>0?loan*q**nL*(q-1)/(q**nL-1):loan/nL):0;
+  let rest=loan;const eq=I-loan;
+  const rows=[],cfs=[-eq];let npv=-eq,cum=-eq,cumD=-eq,amort=null,amortD=null;
+  let costD=0,costPVD=0,eD=0,boutD=0,batRepD=0,first=null;
+  const hasBat=batCap>0&&M.feedMode!=='voll';
+  for(let y=1;y<=N;y++){
+    const degF=Math.max(0,1-P.lid/100-P.deg/100*(y-1));
+    let replInv=0,replBat=0,batAge=0;
+    if(hasBat){const L=Math.max(1,P.batLife);batAge=(y-1)%L;if(y>1&&(y-1)%L===0)replBat=inv.bat*P.batRepPct/100*(ov.investF||1)}
+    if(P.invRepYear>0&&y===P.invRepYear+1)replInv=inv.inv*P.invRepPct/100*(ov.investF||1);
+    const repl=replBat+replInv;
+    const r=simYear(M,{degF,batCap:hasBat?batCap:0,batPow,batAge,scale:sc,yieldF:ov.yieldF||1,collect:y===1&&ov.collect});
+    if(y===1)first=r;
+    const pr=price0*Math.pow(1+inc,y-1);
+    const tf=y<=P.eegYears?tariff:post;
+    const save=r.self*pr,rev=(r.feed-r.unpaid)*tf;
+    const opex=(P.opexIns+P.opexMaint+P.opexMeter)*Math.pow(1+P.opexInc/100,y-1)*(sc<1?0.7+0.3*sc:1);
+    const interest=y<=nL?rest*(q-1):0,debt=y<=nL&&loan>0?ann:0;rest=Math.max(0,rest-(debt-interest));
+    const cf=save+rev-opex-repl-debt;
+    const disc=Math.pow(1+iR,y);
+    npv+=cf/disc;const pc=cum,pcd=cumD;cum+=cf;cumD+=cf/disc;cfs.push(cf);
+    if(amort===null&&cum>=0&&pc<0)amort=y-1+(-pc)/(cum-pc);
+    if(amortD===null&&cumD>=0&&pcd<0)amortD=y-1+(-pcd)/(cumD-pcd);
+    costD+=(opex+repl)/disc;costPVD+=(opex+replInv)/disc;eD+=(r.pv-r.curt)/disc;boutD+=r.bout/disc;batRepD+=replBat/disc;
+    rows.push({y,pv:r.pv,self:r.self,feed:r.feed,grid:r.grid,load:r.load,evq:r.evq,aut:r.aut,price:pr,tariff:tf,save,rev,opex,repl,debt,interest,cf,cum,cumD});
+  }
+  if(eq<=0&&amort===null)amort=0;
+  const lcoe=eD>0?(I+costD)/eD:null;
+  const lcoePV=eD>0?(I-inv.bat*(ov.investF||1)+costPVD)/eD:null;
+  const batKWh=boutD>0&&hasBat?(inv.bat*(ov.investF||1)+batRepD)/boutD:null;
+  return {I,inv,loan,ann,rows,npv,irr:irr(cfs),amort,amortD,lcoe,lcoePV,batKWh,first,price0,tariff,post};
+}
+if(typeof module!=='undefined')module.exports={niceBatUp,genWeather,buildModel,simYear,econ,investment,eegTariff,orient,horizonFn,getWeather,layoutSurface,designInverters,planStrings,recBattery,niceBat,INV_CAT};
+</script>
+
+<script id="ui">
+"use strict";
+/* ===================== Parameter & Voreinstellungen ===================== */
+const REGIONS=[
+ ['Hamburg',53.55,10.00,985,9.9],['Kiel / Schleswig-Holstein',54.32,10.13,1000,9.3],['Rostock / Ostseeküste',54.09,12.10,1075,9.4],
+ ['Bremen',53.08,8.80,990,10.0],['Hannover',52.37,9.73,1010,9.9],['Berlin / Brandenburg',52.52,13.40,1070,10.1],['Magdeburg',52.13,11.62,1055,10.0],
+ ['Münster / Münsterland',51.96,7.63,1000,10.2],['Ruhrgebiet (Essen / Dortmund)',51.47,7.20,1005,10.6],['Bergisches Land / Ennepe-Ruhr',51.30,7.30,990,9.9],
+ ['Köln / Bonn',50.94,6.96,1045,10.9],['Sauerland / Siegen',51.10,8.10,990,8.5],['Kassel / Nordhessen',51.31,9.48,1030,9.5],['Frankfurt / Rhein-Main',50.11,8.68,1090,11.0],
+ ['Saarbrücken',49.23,7.00,1100,10.2],['Leipzig',51.34,12.37,1085,10.1],['Dresden',51.05,13.74,1090,10.0],['Erfurt / Thüringen',50.98,11.03,1065,9.4],
+ ['Nürnberg / Franken',49.45,11.08,1135,9.9],['Stuttgart',48.78,9.18,1140,10.6],['Freiburg / Oberrhein',47.99,7.85,1185,11.6],['München / Oberbayern',48.14,11.58,1190,9.7],
+ ['Bodensee (Konstanz)',47.66,9.18,1200,10.0],['Alpenvorland (Garmisch)',47.49,11.10,1170,7.4]];
+const HORIZON_PRESETS={frei:[0,0,0,0,0,0,0,0],leicht:[3,3,4,3,2,3,4,3],mittel:[8,8,10,8,6,8,10,8],stark:[15,15,18,15,12,15,18,15]};
+const MODULES={
+ topcon450:{label:'TOPCon Glas-Glas 450 Wp (1762×1134)',pmod:450,modL:1762,modB:1134,gamma:-0.29,betaVoc:-0.25,voc:39.4,vmp:33.0,imp:13.64,isc:14.30,lid:0.5,deg:0.4,modWeight:24,modPrice:90},
+ topcon500:{label:'TOPCon Glas-Glas 500 Wp (1961×1134)',pmod:500,modL:1961,modB:1134,gamma:-0.29,betaVoc:-0.25,voc:44.0,vmp:36.9,imp:13.56,isc:14.25,lid:0.5,deg:0.4,modWeight:27,modPrice:100},
+ bc455:{label:'Back-Contact 455 Wp (1722×1134)',pmod:455,modL:1722,modB:1134,gamma:-0.26,betaVoc:-0.24,voc:40.6,vmp:34.2,imp:13.30,isc:14.00,lid:0.4,deg:0.35,modWeight:21,modPrice:125},
+ perc410:{label:'PERC 410 Wp (1722×1134, günstig)',pmod:410,modL:1722,modB:1134,gamma:-0.34,betaVoc:-0.27,voc:37.4,vmp:31.4,imp:13.06,isc:13.80,lid:1.0,deg:0.55,modWeight:21,modPrice:70}};
+
+const SURF_DEF={name:'Dach Süd',mount:'sd',shape:'rect',lenTop:6,az:0,tilt:35,len:10,wid:6,edge:0.3,obst:0,orient:'hoch',manual:0,near:0,amin:17,gapOW:0.3,aisleN:0};
+const SECTIONS=[
+ {id:'loc',title:'Standort & Klima',hint:'Strahlung, Horizont',open:true,fields:[
+  {id:'region',label:'Region (lädt Richtwerte)',type:'sel',cls:'wide',def:'8',opts:()=>REGIONS.map((r,i)=>[String(i),`${r[0]} – ${r[3]} kWh/m²`]).concat([['custom','Eigene Werte']])},
+  {id:'lat',label:'Breitengrad',unit:'° N',def:51.47,step:0.01},
+  {id:'lon',label:'Längengrad',unit:'° O',def:7.2,step:0.01},
+  {id:'ghi',label:'Globalstrahlung horizontal',unit:'kWh/m²a',def:1005,step:5,help:'Jahressumme. Standortgenau: PVGIS (EU-JRC) oder DWD-Strahlungskarte.'},
+  {id:'tmean',label:'Jahresmitteltemperatur',unit:'°C',def:10.6,step:0.1},
+  {id:'albedo',label:'Albedo (Bodenreflexion)',unit:'–',def:0.2,step:0.01,help:'Gras 0,20 · Beton/Kies 0,30 · helle Dachbahn 0,50 · Schnee 0,70'},
+  {id:'seed',label:'Wetterjahr (Zufallsvariante)',unit:'Nr.',def:1,step:1},
+  {id:'hPreset',label:'Horizont / Fernverschattung',type:'sel',cls:'wide',def:'frei',opts:()=>[['frei','Freie Lage (0°)'],['leicht','Leicht (2–4°, Vorort)'],['mittel','Mittel (6–10°, Stadt/Tal)'],['stark','Stark (12–18°, enge Bebauung/Hanglage)'],['custom','Eigene Horizonthöhen']]},
+  {id:'_hgrid',type:'hgrid'}]},
+ {id:'surf',title:'Dachflächen',hint:'Dachform, Belegung',open:true,custom:'surfaces'},
+ {id:'mod',title:'Module',hint:'Datenblattwerte',fields:[
+  {id:'modPreset',label:'Modultyp (lädt Datenblatt)',type:'sel',cls:'wide',def:'topcon450',opts:()=>Object.entries(MODULES).map(([k,v])=>[k,v.label]).concat([['custom','Eigenes Datenblatt']])},
+  {id:'pmod',label:'Nennleistung (STC)',unit:'Wp',def:450,step:5},
+  {id:'modL',label:'Länge',unit:'mm',def:1762,step:1},
+  {id:'modB',label:'Breite',unit:'mm',def:1134,step:1},
+  {id:'gamma',label:'Temperaturkoeff. Pmax',unit:'%/K',def:-0.29,step:0.01},
+  {id:'betaVoc',label:'Temperaturkoeff. Voc',unit:'%/K',def:-0.25,step:0.01},
+  {id:'voc',label:'Leerlaufspannung Voc',unit:'V',def:39.4,step:0.1},
+  {id:'vmp',label:'MPP-Spannung Vmpp',unit:'V',def:33.0,step:0.1},
+  {id:'imp',label:'MPP-Strom Impp',unit:'A',def:13.64,step:0.01},
+  {id:'isc',label:'Kurzschlussstrom Isc',unit:'A',def:14.30,step:0.01},
+  {id:'lid',label:'Anfangsdegradation (LID/LeTID)',unit:'%',def:0.5,step:0.1},
+  {id:'deg',label:'Jährliche Degradation',unit:'%/a',def:0.4,step:0.05},
+  {id:'modWeight',label:'Modulgewicht',unit:'kg',def:24,step:0.5},
+  {id:'modPrice',label:'Preis je Modul',unit:'€',def:90,step:1}]},
+ {id:'inv',title:'Wechselrichter & Verluste',hint:'Auslegung, DC-Leitung',fields:[
+  {id:'invMode',label:'Wechselrichter',type:'sel',cls:'wide',def:'auto',opts:()=>[['auto','Empfehlung automatisch ermitteln'],['manual','Manuell festlegen']]},
+  {id:'dcac',label:'Ziel DC/AC-Verhältnis',unit:'–',def:1.15,step:0.05,when:'invMode=auto',help:'Übliche Auslegung 1,0–1,3. Höher = mehr Clipping, günstigerer WR.'},
+  {id:'invPriceF',label:'Preisniveau Wechselrichter',unit:'%',def:100,step:5,when:'invMode=auto',help:'Bezogen auf die hinterlegten Richtpreise 2026. Hybrid-WR (bei Speicher) +40 %.'},
+  {id:'invPhase',label:'Netzanschluss',type:'sel',def:'3',when:'invMode=manual',opts:()=>[['3','dreiphasig'],['1','einphasig']]},
+  {id:'pacInv',label:'Nennleistung AC je Gerät',unit:'kW',def:10,step:0.1,when:'invMode=manual'},
+  {id:'invCount',label:'Anzahl Wechselrichter',unit:'Stk',def:1,step:1,when:'invMode=manual'},
+  {id:'mpptN',label:'MPP-Tracker je Gerät',unit:'Stk',def:2,step:1,when:'invMode=manual'},
+  {id:'spmMax',label:'Strings je MPP-Tracker (max.)',unit:'Stk',def:1,step:1,when:'invMode=manual'},
+  {id:'imppt',label:'Max. Eingangsstrom je MPP-Tracker',unit:'A',def:16,step:0.5,when:'invMode=manual'},
+  {id:'vmaxInv',label:'Max. DC-Eingangsspannung',unit:'V',def:1000,step:10,when:'invMode=manual'},
+  {id:'vmppMin',label:'MPP-Spannungsbereich von',unit:'V',def:160,step:10,when:'invMode=manual'},
+  {id:'vmppMax',label:'MPP-Spannungsbereich bis',unit:'V',def:950,step:10,when:'invMode=manual'},
+  {id:'invPrice',label:'Preis je Gerät',unit:'€',def:1750,step:50,when:'invMode=manual'},
+  {id:'etaMax',label:'WR-Maximalwirkungsgrad',unit:'%',def:98.2,step:0.1},
+  {id:'tmin',label:'Tiefste Modultemperatur (Voc-Nachweis)',unit:'°C',def:-10,step:1,help:'DIN VDE 0100-712: Voc bei tiefster zu erwartender Temperatur.'},
+  {id:'dcLen',label:'DC-Leitungslänge je String (einfach)',unit:'m',def:20,step:1},
+  {id:'dcCs',label:'DC-Leitungsquerschnitt',type:'sel',def:'6',opts:()=>[['4','4 mm²'],['6','6 mm²'],['10','10 mm²'],['16','16 mm²']]},
+  {id:'soil',label:'Verschmutzung',unit:'%',def:2,step:0.5},
+  {id:'mismatch',label:'Mismatch & Toleranzen',unit:'%',def:1.0,step:0.1},
+  {id:'acLoss',label:'AC-Leitung & Sonstiges',unit:'%',def:0.5,step:0.1},
+  {id:'optim',label:'Leistungsoptimierer je Modul',type:'chk',def:false,help:'Halbiert Teilverschattungsverluste, senkt Mismatch; Mehrkosten siehe Investition.'}]},
+ {id:'load',title:'Verbrauch',hint:'Lastprofil, WP, E-Auto',fields:[
+  {id:'profile',label:'Lastprofil',type:'sel',cls:'wide',def:'H0',opts:()=>[['H0','H0 Haushalt (BDEW, dynamisiert)'],['G1','G1 Büro / Verwaltung (werktags 8–18)'],['SCH','Schule (mit Ferien NRW)'],['G0','G0 Gewerbe allgemein'],['CUSTOM','Eigener Lastgang (8760 h / 35040 ¼h)']]},
+  {id:'annual',label:'Jahresverbrauch Grundlast',unit:'kWh/a',def:4500,step:100,help:'Ohne Wärmepumpe und E-Auto.'},
+  {id:'customUnit',label:'Einheit eigener Lastgang',type:'sel',def:'kWh',when:'profile=CUSTOM',opts:()=>[['kWh','kWh je Intervall'],['kW','kW mittlere Leistung']]},
+  {id:'customData',label:'Lastgang einfügen (eine Zeile je Wert, letzter Zahlenwert je Zeile)',type:'area',def:'',when:'profile=CUSTOM'},
+  {id:'peakShare',label:'Lastspitzen innerhalb der Stunde',unit:'%',def:60,step:5,help:'Geräte ziehen kurzzeitig mehr als der Stundenmittelwert. Haushalt 60 %, Büro/Schule/Gewerbe 25 %, ¼-h-Lastgang 15 %.'},
+  {id:'hpKwh',label:'Wärmepumpe Strombedarf',unit:'kWh/a',def:0,step:100,help:'Verteilung nach Heizgradstunden (Heizgrenze 15 °C) + 18 % Warmwasser.'},
+  {id:'evOn',label:'E-Auto mit Wallbox einplanen',type:'chk',def:false},
+  {id:'evKm',label:'E-Auto Fahrleistung',unit:'km/a',def:12000,step:500,dep:'evOn'},
+  {id:'evCons',label:'Verbrauch inkl. Ladeverlust',unit:'kWh/100km',def:19,step:0.5,dep:'evOn'},
+  {id:'evPow',label:'Wallbox-Leistung',unit:'kW',def:11,step:0.1,dep:'evOn'},
+  {id:'evStrat',label:'Ladestrategie',type:'sel',def:'pv',dep:'evOn',opts:()=>[['pv','PV-Überschussladen (9–17 Uhr), Rest abends'],['abend','Sofortladen abends (18–23 Uhr)']]},
+  {id:'evHome',label:'Auto tagsüber zu Hause',unit:'Tage/Wo',def:2,step:1,dep:'evOn'}]},
+ {id:'bat',title:'Batteriespeicher',hint:'optional',fields:[
+  {id:'batOn',label:'Speicher in Wirtschaftlichkeit einrechnen',type:'chk',def:false,help:'Unabhängig davon zeigt die Übersicht eine Größenempfehlung und der Reiter „Eigenverbrauch & Speicher“ einen Größenvergleich.'},
+  {id:'batCap',label:'Nennkapazität',unit:'kWh',def:10,step:0.5,dep:'batOn'},
+  {id:'batUsable',label:'Nutzbare Kapazität (DoD)',unit:'%',def:95,step:1,dep:'batOn'},
+  {id:'batPow',label:'Lade-/Entladeleistung',unit:'kW',def:5,step:0.1,dep:'batOn'},
+  {id:'batEta',label:'Wirkungsgrad Zyklus (AC→AC)',unit:'%',def:90,step:0.5,dep:'batOn',help:'DC-gekoppelt typ. 90–94 %, AC-gekoppelt 85–90 %.'},
+  {id:'batCoupling',label:'Kopplung',type:'sel',def:'DC',dep:'batOn',opts:()=>[['DC','DC (Hybrid-WR, nutzt Clipping)'],['AC','AC (separater Batterie-WR)']]},
+  {id:'batStandby',label:'Eigenverbrauch Standby',unit:'W',def:15,step:1,dep:'batOn'},
+  {id:'batReserve',label:'Notstromreserve',unit:'% SoC',def:0,step:5,dep:'batOn'},
+  {id:'batFade',label:'Kapazitätsverlust',unit:'%/a',def:2,step:0.5,dep:'batOn'},
+  {id:'batLife',label:'Lebensdauer bis Tausch',unit:'Jahre',def:15,step:1,dep:'batOn'},
+  {id:'batPrice',label:'Preis inkl. Installation',unit:'€/kWh',def:450,step:10},
+  {id:'batGrid',label:'Netzdienliches Laden (vormittags nur Spitzen)',type:'chk',def:false,dep:'batOn',help:'Lädt vor 11 Uhr nur, was über der Einspeisegrenze liegt – senkt Abregelung.'}]},
+ {id:'grid',title:'Netz & Vergütung',hint:'EEG, Einspeisegrenze',fields:[
+  {id:'feedMode',label:'Betriebsart',type:'sel',cls:'wide',def:'teil',opts:()=>[['teil','Überschusseinspeisung (Eigenverbrauch)'],['voll','Volleinspeisung (kein Eigenverbrauch)'],['keine','Eigenverbrauch ohne Vergütung']]},
+  {id:'feedLimit',label:'Einspeisegrenze (bezogen auf kWp)',type:'sel',cls:'wide',def:'60',opts:()=>[['100','100 % – iMSys + Steuerbox vorhanden'],['70','70 %'],['60','60 % – bis Smart-Meter-Einbau (§ 9 EEG)'],['50','50 %'],['0','0 % – Nulleinspeisung']]},
+  {id:'tariffOv',label:'Vergütung (0 = EEG automatisch)',unit:'ct/kWh',def:0,step:0.01,help:'Automatisch: Sätze für Inbetriebnahme 01.08.2026–31.01.2027, anteilig nach Leistungsstufen.'},
+  {id:'eegYears',label:'Vergütungsdauer',unit:'Jahre',def:20,step:1},
+  {id:'negHours',label:'Stunden mit negativen Börsenpreisen',unit:'h/a',def:300,step:25,help:'§ 51 EEG (Solarspitzengesetz): Neuanlagen erhalten in diesen Stunden keine Vergütung.'},
+  {id:'postTariff',label:'Erlös nach Förderende',unit:'ct/kWh',def:3.0,step:0.1}]},
+ {id:'cost',title:'Investition & Betrieb',hint:'Preise 2026',fields:[
+  {id:'costLump',label:'Pauschalpreis PV laut Angebot (0 = Komponenten)',unit:'€',def:0,step:100,help:'Ohne Speicher. Ersetzt die Komponentenpreise.'},
+  {id:'costMount',label:'Montagesystem',unit:'€/kWp',def:120,step:5},
+  {id:'costInst',label:'Montage & Installation',unit:'€/kWp',def:300,step:10},
+  {id:'costOpt',label:'Optimierer',unit:'€/Modul',def:45,step:1},
+  {id:'costElec',label:'Elektro, Zählerschrank, Überspannungsschutz',unit:'€',def:1500,step:50},
+  {id:'costScaff',label:'Gerüst / Absturzsicherung',unit:'€',def:900,step:50},
+  {id:'costPlan',label:'Planung, Netzanmeldung, Inbetriebnahme',unit:'€',def:500,step:50},
+  {id:'vat',label:'Umsatzsteuer auf Investition',unit:'%',def:0,step:1,help:'0 % nach § 12 Abs. 3 UStG (bis 30 kWp, Wohn- und Gemeinwohlgebäude).'},
+  {id:'opexIns',label:'Versicherung',unit:'€/a',def:90,step:5},
+  {id:'opexMaint',label:'Wartung / E-Check (DIN VDE 0105-100)',unit:'€/a',def:100,step:10},
+  {id:'opexMeter',label:'Messstellenbetrieb (iMSys)',unit:'€/a',def:50,step:5},
+  {id:'invRepYear',label:'WR-Tausch nach',unit:'Jahren',def:15,step:1},
+  {id:'invRepPct',label:'Kosten WR-Tausch',unit:'% Erstpreis',def:90,step:5},
+  {id:'batRepPct',label:'Kosten Speichertausch',unit:'% Erstpreis',def:70,step:5}]},
+ {id:'fin',title:'Finanzierung & Preise',hint:'Zins, Strompreis',fields:[
+  {id:'years',label:'Betrachtungszeitraum',unit:'Jahre',def:25,step:1},
+  {id:'discount',label:'Kalkulationszins',unit:'%',def:3.0,step:0.25},
+  {id:'price',label:'Strombezugspreis (Arbeitspreis brutto)',unit:'ct/kWh',def:34,step:0.5},
+  {id:'priceInc',label:'Strompreissteigerung',unit:'%/a',def:2.0,step:0.25},
+  {id:'opexInc',label:'Teuerung Betriebskosten',unit:'%/a',def:2.0,step:0.25},
+  {id:'loanShare',label:'Fremdkapitalanteil',unit:'%',def:0,step:5},
+  {id:'loanRate',label:'Kreditzins (z. B. KfW 270)',unit:'%',def:4.0,step:0.1},
+  {id:'loanYears',label:'Kreditlaufzeit',unit:'Jahre',def:10,step:1},
+  {id:'co2',label:'CO₂-Faktor Strommix',unit:'g/kWh',def:363,step:1}]}];
+
+const NUMSEL=new Set(['dcCs','feedLimit']);
+function defaults(){
+  const P={};for(const s of SECTIONS)for(const f of (s.fields||[]))if(f.id&&!f.id.startsWith('_'))P[f.id]=f.def;
+  Object.assign(P,{hN:0,hNO:0,hO:0,hSO:0,hS:0,hSW:0,hW:0,hNW:0,tplType:'sattel',tplL:12,tplD:9,tplTilt:35,tplAz:0,tplSkipN:true});
+  P.dcCs=6;P.feedLimit=60;
+  P.surfaces=[{...SURF_DEF}];
+  return P;
+}
+const SCENARIOS=[
+ {label:'Beispiel: Einfamilienhaus Süd (Standard)',over:{}},
+ {label:'Beispiel: Einfamilienhaus Ost-West',over:{surfaces:[{...SURF_DEF,name:'Dach Ost',az:-90,len:10,wid:5.5},{...SURF_DEF,name:'Dach West',az:90,len:10,wid:5.5}]}},
+ {label:'Beispiel: Walmdach mit Speicher',over:{batOn:true,batCap:7.5,batPow:4,surfaces:[{...SURF_DEF,name:'Walm Süd',shape:'trapez',len:13,lenTop:4,wid:5.5},{...SURF_DEF,name:'Walm West',shape:'dreieck',orient:'quer',az:90,len:9,wid:5.5}]}},
+ {label:'Beispiel: EFH mit Wärmepumpe, E-Auto und Speicher',over:{hpKwh:4200,evOn:true,evKm:14000,annual:4000,batOn:true,batCap:12,batPow:6,surfaces:[{...SURF_DEF,len:12,wid:6.5}]}},
+ {label:'Beispiel: Verwaltungsgebäude, Flachdach Süd (~70 kWp)',over:{profile:'G1',peakShare:25,annual:140000,feedLimit:100,price:27,dcac:1.1,costInst:220,costMount:140,costElec:6000,costScaff:2500,costPlan:3500,opexIns:350,opexMaint:600,opexMeter:100,albedo:0.3,dcLen:35,dcCs:6,
+   surfaces:[{...SURF_DEF,name:'Flachdach',mount:'fs',az:0,tilt:15,len:32,wid:24,edge:1.0,orient:'quer',amin:15}]}},
+ {label:'Beispiel: Schule, Flachdach Ost-West (~100 kWp)',over:{profile:'SCH',peakShare:25,annual:95000,feedLimit:100,price:27,dcac:1.25,costInst:220,costMount:110,costElec:6000,costScaff:2500,costPlan:3500,opexIns:400,opexMaint:700,opexMeter:100,albedo:0.3,dcLen:40,
+   surfaces:[{...SURF_DEF,name:'Flachdach OW',mount:'fow',az:-90,tilt:10,len:30,wid:22,edge:1.0,orient:'hoch'}]}}];
+
+/* ===================== Zustand ===================== */
+const LSKEY='pv-anlagenrechner.v2';
+let P=defaults();
+try{const s=localStorage.getItem(LSKEY);if(s){const o=JSON.parse(s);P=Object.assign(defaults(),o)}}catch(e){}
+let M=null,R=null,REC=null,STUDY=null,FAN=null,activeTab='ov',fanSel=null,dirty={};
+const CH={};
+
+/* ===================== Formatierung ===================== */
+const nf=(d)=>new Intl.NumberFormat('de-DE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const NF=[0,1,2,3].map(nf);
+const fmt=(v,d=0)=>v==null||!isFinite(v)?'–':NF[d].format(v);
+const eur=(v)=>v==null||!isFinite(v)?'–':NF[0].format(v)+' €';
+const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tok=(n)=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const scol=(ci)=>`var(--s${(ci%8)+1})`;
+const invName=(u)=>`${fmt(u.kw,u.kw%1?1:0)} kW ${u.t.ph===1?'einphasig':'dreiphasig'}`;
+
+/* ===================== Infotexte ===================== */
+const ti=(t)=>`<span class="tipi" tabindex="0" role="button" aria-label="Info" data-tip="${esc(t)}">i</span>`;
+const TIP={
+ region:'Lädt gerundete Mittelwerte für Koordinaten, Globalstrahlung und Temperatur. Für genaue Werte die Jahresstrahlung des Standorts aus PVGIS (EU-Kommission, kostenlos) oder vom DWD übernehmen.',
+ lat:'Bestimmt den Sonnenstand über das Jahr.',lon:'Verschiebt den Sonnenmittag gegenüber der Uhrzeit (MEZ): im Westen Deutschlands steht die Sonne erst gegen 12:30 Uhr am höchsten.',
+ ghi:'Jährliche Sonneneinstrahlung auf eine waagerechte Fläche. Deutschland: ca. 950 kWh/m² (Norden) bis 1.250 kWh/m² (Süden). Wichtigster Eingabewert für den Ertrag. Einzelne Jahre schwanken um etwa ±5–8 %.',
+ tmean:'Beeinflusst die Modultemperatur. Warme Module liefern weniger Leistung (ca. −0,3 % je Kelvin).',
+ albedo:'Anteil des Lichts, den die Umgebung auf die Module zurückwirft. Wirkt vor allem bei steilen Modulen und Fassaden.',
+ seed:'Die Simulation erzeugt aus der Jahresstrahlung ein künstliches Wetterjahr mit einer Abfolge sonniger und trüber Tage. Jahres- und Monatssummen sind immer gleich, die Nummer ändert nur die Reihenfolge der Tage – wie zwei verschiedene, gleich wahrscheinliche Jahre. Der Ertrag bleibt fast gleich; Eigenverbrauch und Speichernutzen ändern sich leicht. Die Spannbreite zeigt der Reiter „Sensitivität“.',
+ hPreset:'Höhe des Horizonts durch Berge, Nachbargebäude oder entfernte Bäume. Steht die Sonne tiefer, fällt ihre direkte Strahlung weg. Mit „Eigene Horizonthöhen“ je Himmelsrichtung eintragen.',
+ modPreset:'Lädt typische Datenblattwerte. Einzelne Werte können überschrieben werden.',
+ pmod:'Leistung unter Standard-Testbedingungen (STC: 1.000 W/m², 25 °C Zelltemperatur, AM 1,5).',modL:'Außenmaß laut Datenblatt; bestimmt, wie viele Module auf das Dach passen.',modB:'Außenmaß laut Datenblatt.',
+ gamma:'Leistungsverlust je Kelvin Zelltemperatur über 25 °C. TOPCon ca. −0,29 %/K, PERC ca. −0,35 %/K.',
+ betaVoc:'Spannungsänderung je Kelvin. Bei Kälte steigt die Spannung – maßgeblich für die maximale Stringlänge.',
+ voc:'Spannung ohne Last. Grundlage für den Nachweis der maximalen DC-Spannung bei tiefster Temperatur.',
+ vmp:'Spannung im Punkt maximaler Leistung. Muss bei Hitze und bei Kälte im MPP-Bereich des Wechselrichters liegen.',
+ imp:'Strom im Punkt maximaler Leistung. Bestimmt, wie viele Strings parallel an einen MPP-Tracker passen, und die Leitungsverluste.',
+ isc:'Kurzschlussstrom; mit 1,25-fachem Zuschlag Grundlage für Schutzeinrichtungen und Leitungen.',
+ lid:'Einmaliger Leistungsverlust in den ersten Betriebswochen (licht- und temperaturinduzierte Degradation).',
+ deg:'Leistungsverlust pro Jahr. Leistungsgarantien üblich 0,4 %/a (TOPCon) bis 0,55 %/a (PERC).',
+ modWeight:'Für die Flächenlast (Statik).',modPrice:'Netto-Preis je Modul. 2026 ca. 0,18–0,28 €/Wp.',
+ invMode:'Automatisch: Der Rechner wählt Leistungsklasse, Gerätezahl und Stringaufteilung. Manuell: eigene Gerätedaten eintragen – beim Umschalten werden die Werte der aktuellen Empfehlung vorbelegt.',
+ dcac:'Modulleistung (kWp) geteilt durch Wechselrichterleistung (kW). Module erreichen ihre Nennleistung selten, deshalb ist eine leichte Überdimensionierung (1,1–1,3) wirtschaftlich. Bei Ost-West sind bis 1,4 üblich.',
+ invPhase:'Einphasig nur bis 4,6 kVA zulässig (VDE-AR-N 4105).',pacInv:'AC-Nennleistung eines Geräts.',invCount:'Anzahl gleicher Geräte.',
+ mpptN:'MPP-Tracker regeln Spannung und Strom unabhängig voneinander. Dachflächen mit unterschiedlicher Ausrichtung oder Stringlänge brauchen eigene Tracker.',
+ spmMax:'Wie viele gleich lange Strings parallel an einen Tracker angeschlossen werden dürfen.',imppt:'Maximaler Eingangsstrom je Tracker laut Datenblatt.',
+ vmaxInv:'Absolute Obergrenze; die Leerlaufspannung darf sie auch am kältesten Morgen nicht überschreiten.',vmppMin:'Unterhalb dieser Spannung kann der Wechselrichter nicht mehr optimal regeln (relevant bei Hitze).',vmppMax:'Obere Grenze des MPP-Bereichs (relevant bei Kälte).',
+ invPrice:'Netto-Preis je Gerät.',etaMax:'Höchster Wirkungsgrad laut Datenblatt. Im Teillastbereich rechnet das Programm mit einer abfallenden Kennlinie.',
+ tmin:'Tiefste Modultemperatur an einem klaren Wintermorgen. In Deutschland üblich −10 °C, in Höhenlagen −15 bis −20 °C.',
+ dcLen:'Einfache Länge vom String bis zum Wechselrichter. Hin- und Rückleiter rechnet das Programm automatisch.',
+ dcCs:'Größerer Querschnitt senkt die Leitungsverluste. Empfohlen ist ein Spannungsfall unter 1 %.',
+ soil:'Ertragsverlust durch Staub, Pollen, Laub und Vogelkot. Steildach 1–2 %, flach geneigte Module 3–5 %.',
+ mismatch:'Leistungstoleranzen zwischen Modulen und ungleiche Betriebsbedingungen im String.',acLoss:'AC-Leitungen, Eigenverbrauch der Anlage, Ausfallzeiten.',
+ profile:'Zeitlicher Verlauf des Verbrauchs. Bestimmt maßgeblich, wie viel PV-Strom direkt genutzt wird. Ein gemessener Lastgang (z. B. RLM-Export vom Netzbetreiber oder Smart-Meter-Daten) ist am genauesten.',
+ annual:'Jährlicher Stromverbrauch laut Abrechnung, ohne Wärmepumpe und E-Auto – diese werden separat eingetragen.',
+ customUnit:'kWh je Intervall (Energie) oder kW (mittlere Leistung im Intervall). Bei Stundenwerten ist beides gleich.',customData:'Werte z. B. aus Excel kopieren und einfügen. Erwartet werden 8.760 Stunden- oder 35.040 Viertelstundenwerte eines Jahres ab 1. Januar.',
+ peakShare:'Ein Stundenwert verdeckt kurze Spitzen (Wasserkocher, Herd). Der Anteil wird in der Simulation auf kurze Spitzen verteilt, die PV und Speicher nur teilweise decken können. Ohne diese Korrektur würde der Eigenverbrauch überschätzt.',
+ hpKwh:'Der Verbrauch fällt überwiegend im Winter an, wenn wenig PV-Strom erzeugt wird.',
+ evOn:'Rechnet ein E-Auto mit Wallbox ein. Erhöht den Verbrauch und bei Überschussladen auch den Eigenverbrauch.',
+ evKm:'Jährliche Fahrleistung.',evCons:'Verbrauch ab Steckdose inkl. Ladeverlusten (ca. 10 %).',evPow:'11 kW dreiphasig ist Standard; Überschussladen beginnt ab 1,4 kW.',
+ evStrat:'Überschussladen startet, wenn mindestens 1,4 kW PV-Überschuss vorhanden sind (einphasig, 6 A). Was tagsüber nicht geladen werden kann, lädt das Auto abends aus dem Netz.',
+ evHome:'An wie vielen Tagen pro Woche das Auto tagsüber zu Hause steht (Wochenende zuerst).',
+ batOn:'',batCap:'Brutto-Kapazität laut Datenblatt.',batUsable:'Anteil der Kapazität, der tatsächlich genutzt werden darf (Entladetiefe).',
+ batPow:'Begrenzt, wie schnell geladen und entladen wird. Typisch 0,5 C, also 5 kW bei 10 kWh.',batEta:'Verluste beim Laden und Entladen zusammen.',
+ batCoupling:'DC: Speicher am Hybrid-Wechselrichter, weniger Umwandlungsverluste, kann sonst abgeschnittene Spitzenleistung aufnehmen. AC: eigener Batterie-Wechselrichter, gut zum Nachrüsten.',
+ batStandby:'Dauerverbrauch von Batteriemanagement und Elektronik.',batReserve:'Bleibt für Notstrom reserviert und steht dem Eigenverbrauch nicht zur Verfügung.',
+ batFade:'Kapazitätsverlust pro Jahr durch Alterung.',batLife:'Nach dieser Zeit wird ein Tausch eingerechnet.',batPrice:'Preis je kWh Nennkapazität inkl. Montage. 2026 ca. 350–600 €/kWh.',
+ feedMode:'Überschusseinspeisung: erst selbst nutzen, Rest einspeisen. Volleinspeisung: alles einspeisen, dafür höhere Vergütung. Ohne Vergütung: z. B. bei Nulleinspeisung oder Steckersolar.',
+ feedLimit:'Ohne intelligentes Messsystem mit Steuerbox dürfen neue Anlagen nur 60 % ihrer Leistung einspeisen (Solarspitzengesetz). Der Rest muss selbst verbraucht, gespeichert oder abgeregelt werden.',
+ tariffOv:'',eegYears:'Die Vergütung gilt 20 Jahre ab Inbetriebnahme.',negHours:'',postTariff:'Erlös nach Ende der EEG-Förderung, z. B. Marktwert Solar abzüglich Vermarktungsgebühren.',
+ costLump:'',costMount:'Schienen, Haken bzw. Aufständerung je kWp.',costInst:'Montage, DC-Verkabelung, Inbetriebnahme je kWp.',costOpt:'Preis je Optimierer inkl. Montage.',
+ costElec:'Zählerschrankumbau, Überspannungsschutz, AC-Anschluss.',costScaff:'Gerüst bzw. Absturzsicherung.',costPlan:'Planung, Netzanmeldung, Marktstammdatenregister, Dokumentation.',vat:'',
+ opexIns:'Photovoltaik- bzw. Allgefahrenversicherung.',opexMaint:'Wiederkehrende Prüfung und Wartung.',opexMeter:'Jährliche Kosten für das intelligente Messsystem (Preisobergrenzen nach MsbG).',
+ invRepYear:'Wechselrichter halten typischerweise 12–20 Jahre. 0 = kein Tausch.',invRepPct:'Bezogen auf den heutigen Gerätepreis.',batRepPct:'Speicherpreise sinken; ein späterer Tausch kostet voraussichtlich weniger als heute.',
+ years:'Rechnerische Nutzungsdauer. Module halten oft 30 Jahre und länger.',discount:'Zinssatz, mit dem künftige Zahlungen auf heute abgezinst werden – entspricht der Rendite einer Alternativanlage.',
+ price:'Arbeitspreis brutto ohne Grundpreis. Nur dieser Anteil wird durch Eigenverbrauch eingespart.',priceInc:'Erwartete jährliche Steigerung des Strompreises.',opexInc:'Jährliche Teuerung von Versicherung, Wartung und Messstellenbetrieb.',
+ loanShare:'Anteil der Investition, der über einen Kredit finanziert wird.',loanRate:'Effektivzins, z. B. KfW-Programm 270.',loanYears:'Laufzeit bis zur vollständigen Tilgung (Annuität).',
+ co2:'Emissionsfaktor des deutschen Strommixes (Umweltbundesamt). Jede erzeugte PV-kWh verdrängt Netzstrom.',
+ tplType:'Satteldach: zwei Flächen. Walmdach: zwei Trapeze und zwei Dreiecke. Zeltdach: vier Dreiecke. Flachdach: Süd-Aufständerung oder Ost-West.',
+ tplL:'Gebäudelänge an der Traufe (Außenmaß inkl. Dachüberstand).',tplD:'Gebäudetiefe von Traufe zu Traufe.',tplTilt:'Dachneigung in Grad.',tplAz:'Himmelsrichtung der Hauptdachfläche: Süd = 0°, Ost = −90°, West = +90°.'};
+const STIP={
+ mount:'Aufdach: Module mit Abstand über der Dacheindeckung (gut hinterlüftet). Indach: Module ersetzen die Eindeckung (wärmer, ca. 2–3 % weniger Ertrag). Flachdach: auf Gestellen aufgeständert.',
+ shape:'Rechteck für Sattel- und Pultdächer, Trapez für die Längsseiten eines Walmdachs, Dreieck für Walmseiten und Zeltdächer.',
+ az:'Himmelsrichtung, in die die Modulfläche zeigt: Süd = 0°, Ost = −90°, West = +90°, Nord = 180°. Bei Ost-West die Richtung der Osthälfte.',
+ tilt:'Neigung gegenüber der Waagerechten. Auf Flachdächern der Aufständerungswinkel.',
+ len:'Länge der Dachfläche an der Traufe (unten), auf Flachdächern quer zur Modulausrichtung.',
+ lenTop:'Länge der Firstlinie beim Trapez (Walmdach-Längsseite).',
+ wid:'Steildach: Länge von der Traufe bis zum First entlang der Dachschräge (nicht die Grundfläche). Flachdach: Dachtiefe in Ausrichtungsrichtung.',
+ edge:'Freizuhaltender Randstreifen für Windsog, Montage und Brandschutz. Üblich 0,3–0,5 m auf Steildächern, ca. 1 m auf Flachdächern; Abstände zu Brandwänden nach Landesbauordnung.',
+ obst:'Fläche von Dachfenstern, Gauben, Schornsteinen usw. Die entsprechende Zahl an Modulplätzen entfällt.',
+ orient:'Hochkant: lange Modulseite zeigt vom First zur Traufe. Quer passt auf schmalen oder dreieckigen Flächen oft besser.',
+ amin:'Sonnenhöhe, bei der sich die Reihen gerade nicht verschatten. Am 21.12. mittags steht die Sonne in NRW ca. 15° hoch. Kleinere Werte bringen mehr Module, aber mehr Verschattung im Winter – die Simulation rechnet die Verschattung mit.',
+ gapOW:'Abstand zwischen zwei Doppelreihen am Tiefpunkt (Kehle). Ost-West-Systeme werden meist fast lückenlos gebaut (ca. 0,2–0,3 m). Ein größerer Spalt verringert die gegenseitige Verschattung bei tiefer Sonne, kostet aber Modulplätze.',
+ aisleN:'Wartungsgang (0,6 m breit) nach jeweils dieser Anzahl Doppelreihen, z. B. für Reinigung und Zugang zu Dachabläufen. 0 = kein Gang.',
+ near:'Anteil der Einstrahlung, der durch Hindernisse nahe den Modulen verloren geht (Gaube, Schornstein, Baum, Antenne). Teilverschattete Module bremsen den ganzen String; Leistungsoptimierer halbieren den Verlust.',
+ manual:'Feste Modulanzahl statt automatischer Belegung, z. B. aus einem Angebot.'};
+const KTIP={
+ 'Anlagenleistung':'Summe der Modulnennleistungen (kWp) und gewählte Wechselrichter.',
+ 'Nutzbarer Jahresertrag':'Wechselstrom nach allen Verlusten im ersten Jahr, ohne abgeregelte Energie. Bezogen auf kWp ergibt sich der spezifische Ertrag – in Deutschland typisch 850–1.100 kWh/kWp.',
+ 'Performance Ratio':'Verhältnis von tatsächlichem Ertrag zu theoretischem Ertrag aus der Einstrahlung auf die Module. Gute Anlagen erreichen 82–90 %.',
+ 'Eigenverbrauchsquote':'Anteil des erzeugten PV-Stroms, der selbst genutzt wird – direkt oder über den Speicher.',
+ 'Autarkiegrad':'Anteil des gesamten Verbrauchs, der aus der eigenen Anlage gedeckt wird.',
+ 'Investition':'Gesamtkosten inkl. Speicher (falls eingerechnet) und Umsatzsteuer laut Einstellung.',
+ 'Amortisation':'Statisch: Jahr, in dem die aufsummierten Überschüsse die Investition decken. Dynamisch: dasselbe mit abgezinsten Zahlungen.',
+ 'Kapitalwert':'Summe aller abgezinsten Zahlungen über den Betrachtungszeitraum minus Investition. Positiv heißt: die Anlage ist rentabler als eine Alternativanlage zum Kalkulationszins.',
+ 'Interner Zinsfuß':'Verzinsung des eingesetzten Kapitals. Die Anlage lohnt sich, wenn der Wert über dem Kalkulationszins liegt.',
+ 'Stromgestehungskosten':'Was eine selbst erzeugte kWh über die Nutzungsdauer kostet (Investition + Betrieb, abgezinst). Liegt der Wert unter dem Strompreis, spart jede selbst genutzte kWh Geld.',
+ 'Einspeisevergütung':'Gesetzliche Vergütung nach EEG, anteilig nach Leistungsstufen. Gilt für Inbetriebnahme bis 31.01.2027.',
+ 'CO₂-Vermeidung':'Erzeugte PV-Energie × Emissionsfaktor des Strommixes.',
+ 'Überschuss nominal':'Summe aller Zahlungen ohne Abzinsung, abzüglich Eigenkapital.',
+ 'LCOE nur PV':'Stromgestehungskosten ohne Speicher – vergleichbar mit Angeboten ohne Batterie.',
+ 'Ersparnis Jahr 1':'Eingesparte Stromkosten plus Einspeiseerlös minus Betriebskosten im ersten Jahr.'};
+const tipbox=document.createElement('div');tipbox.id='tipbox';tipbox.hidden=true;tipbox.setAttribute('role','tooltip');document.body.appendChild(tipbox);
+let tipEl=null;
+function showTip(el){tipEl=el;tipbox.textContent=el.dataset.tip;tipbox.hidden=false;const r=el.getBoundingClientRect(),b=tipbox.getBoundingClientRect();
+  const x=clamp(r.left+r.width/2-b.width/2,8,Math.max(8,innerWidth-b.width-8));let y=r.bottom+6;if(y+b.height>innerHeight-8)y=Math.max(8,r.top-b.height-6);tipbox.style.left=x+'px';tipbox.style.top=y+'px'}
+function hideTip(){tipbox.hidden=true;tipEl=null}
+document.addEventListener('mouseover',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t)});
+document.addEventListener('mouseout',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t&&!t.contains(e.relatedTarget))hideTip()});
+document.addEventListener('focusin',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t)});
+document.addEventListener('focusout',e=>{if(e.target.closest&&e.target.closest('[data-tip]'))hideTip()});
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t){e.preventDefault();e.stopPropagation();if(tipEl===t&&!tipbox.hidden)hideTip();else showTip(t)}else if(tipEl)hideTip()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hideTip()});
+window.addEventListener('scroll',hideTip,true);
+
+/* ===================== Eingabe-Rendering ===================== */
+function fieldHTML(f){
+  if(f.type==='hgrid'){
+    const k=[['hN','N'],['hNO','NO'],['hO','O'],['hSO','SO'],['hS','S'],['hSW','SW'],['hW','W'],['hNW','NW']];
+    return `<div class="hgrid">${k.map(([id,l])=>`<label for="f_${id}">Horizont ${l} [°]<input type="number" id="f_${id}" data-k="${id}" value="${P[id]}" step="1" min="0" max="60"></label>`).join('')}</div>`;
+  }
+  const v=P[f.id];let inp;
+  if(f.type==='sel')inp=`<select id="f_${f.id}" data-k="${f.id}">${f.opts().map(([val,lab])=>`<option value="${val}"${String(v)===val?' selected':''}>${esc(lab)}</option>`).join('')}</select>`;
+  else if(f.type==='chk')inp=`<input type="checkbox" id="f_${f.id}" data-k="${f.id}"${v?' checked':''}>`;
+  else if(f.type==='area')inp=`<textarea id="f_${f.id}" data-k="${f.id}" rows="4" placeholder="z. B. Export aus Lastgangmessung (RLM) oder Smart Meter">${esc(v||'')}</textarea>`;
+  else inp=`<input type="number" id="f_${f.id}" data-k="${f.id}" value="${v}" step="${f.step||'any'}">`;
+  const cls=(f.cls||'')+(f.type==='area'?' wide':'');
+  const tt=[TIP[f.id],f.help].filter(Boolean).join(' ');
+  return `<div class="fld ${cls}"${f.when?` data-when="${f.when}"`:''}${f.dep?` data-dep="${f.dep}"`:''}><label class="lab" for="f_${f.id}">${esc(f.label)}${tt?ti(tt):''}</label><span class="ctl">${inp}${f.unit?`<span class="unit">${esc(f.unit)}</span>`:''}</span></div>`;
+}
+function tplHTML(){
+  const num=(id,lab,unit,step)=>`<div class="fld"><label class="lab" for="f_${id}">${lab}${TIP[id]?ti(TIP[id]):''}</label><span class="ctl"><input type="number" id="f_${id}" data-k="${id}" value="${P[id]}" step="${step}"><span class="unit">${unit}</span></span></div>`;
+  const types=[['sattel','Satteldach'],['walm','Walmdach'],['pult','Pultdach'],['zelt','Zeltdach'],['flach','Flachdach (aufgeständert Süd)'],['flachow','Flachdach Ost-West']];
+  return `<div class="surf tpl"><span class="ttl">Dachform-Assistent${ti('Erzeugt die Dachflächen aus den Gebäudemaßen. Die Sparrenlänge wird aus halber Gebäudetiefe und Neigung berechnet (Tiefe/2 ÷ cos Neigung). Walm- und Zeltdachflächen werden als Trapez bzw. Dreieck angelegt. Je Fläche wählt der Assistent die Modullage (hoch/quer), bei der mehr Module passen.')}</span>
+   <div class="fld"><label class="lab" for="f_tplType">Dachform${ti(TIP.tplType)}</label><span class="ctl"><select id="f_tplType" data-k="tplType">${types.map(([v,l])=>`<option value="${v}"${P.tplType===v?' selected':''}>${l}</option>`).join('')}</select></span></div>
+   ${num('tplL','Gebäudelänge (Traufseite)','m',0.1)}${num('tplD','Gebäudetiefe (Giebelseite)','m',0.1)}${num('tplTilt','Dachneigung','°',1)}${num('tplAz','Ausrichtung Hauptdachfläche','°',1)}
+   <div class="fld"><label class="lab" for="f_tplSkipN">Nordseitige Flächen weglassen</label><span class="ctl"><input type="checkbox" id="f_tplSkipN" data-k="tplSkipN"${P.tplSkipN?' checked':''}></span></div>
+   <button class="btn pri sm" type="button" id="tplApply">Dachflächen erzeugen (ersetzt die Liste)</button></div>`;
+}
+function surfHTML(){
+  const mo=Object.entries(MOUNT_LABEL);
+  const out=P.surfaces.map((s,k)=>{
+    const sel=(key,opts)=>`<select id="s${k}_${key}" data-s="${k}" data-sk="${key}">${opts.map(([v,l])=>`<option value="${v}"${String(s[key])===v?' selected':''}>${l}</option>`).join('')}</select>`;
+    const num=(key,lab,unit,step)=>`<div class="fld"><label class="lab" for="s${k}_${key}">${lab}${STIP[key]?ti(STIP[key]):''}</label><span class="ctl"><input type="number" id="s${k}_${key}" data-s="${k}" data-sk="${key}" value="${s[key]??0}" step="${step}"><span class="unit">${unit}</span></span></div>`;
+    const isFlat=s.mount==='fs'||s.mount==='fow',shp=s.shape||'rect';
+    return `<div class="surf"><div class="sh"><input id="s${k}_name" data-s="${k}" data-sk="name" value="${esc(s.name)}" aria-label="Bezeichnung Dachfläche">${P.surfaces.length>1?`<button class="xbtn" type="button" data-rm="${k}">Entfernen</button>`:''}</div>
+      <div class="fld"><label class="lab" for="s${k}_mount">Montage${ti(STIP.mount)}</label><span class="ctl">${sel('mount',mo)}</span></div>
+      ${!isFlat?`<div class="fld"><label class="lab" for="s${k}_shape">Flächenform${ti(STIP.shape)}</label><span class="ctl">${sel('shape',Object.entries(SHAPE_LABEL))}</span></div>`:''}
+      ${num('az',s.mount==='fow'?'Azimut Ostseite':'Azimut (S = 0, O = −90, W = +90)','°',1)}
+      ${num('tilt',isFlat?'Aufständerungswinkel':'Dachneigung','°',1)}
+      ${num('len',isFlat?'Dachlänge (quer zur Ausrichtung)':(shp==='rect'?'Länge an der Traufe':'Länge an der Traufe (Basis)'),'m',0.1)}
+      ${!isFlat&&shp==='trapez'?num('lenTop','Länge am First','m',0.1):''}
+      ${num('wid',isFlat?'Dachtiefe (in Ausrichtung)':'Sparrenlänge (Traufe–First)','m',0.1)}
+      ${num('edge','Randabstand umlaufend','m',0.05)}
+      ${num('obst','Abzug Fenster, Gauben, Kamine','m²',0.5)}
+      <div class="fld"><label class="lab" for="s${k}_orient">Modullage${ti(STIP.orient)}</label><span class="ctl">${sel('orient',[['hoch','Hochkant'],['quer','Quer']])}</span></div>
+      ${s.mount==='fs'?num('amin','Verschattungsfreie Sonnenhöhe (Reihenabstand)','°',1):''}
+      ${s.mount==='fow'?num('gapOW','Spalt zwischen Doppelreihen','m',0.05)+num('aisleN','Wartungsgang alle … Doppelreihen (0 = keiner)','Reihen',1):''}
+      ${num('near','Teilverschattung (Gaube, Baum, Antenne)','%',0.5)}
+      ${num('manual','Modulanzahl manuell (0 = automatisch)','Stk',1)}
+      <div class="info" id="sinfo${k}"></div></div>`;
+  }).join('');
+  return tplHTML()+out+`<button class="btn" type="button" id="addSurf">+ Dachfläche hinzufügen</button>`;
+}
+function renderInputs(){
+  const el=document.getElementById('inputs');
+  el.innerHTML=SECTIONS.map(s=>`<details class="sec" ${s.open?'open':''} data-sec="${s.id}"><summary>${esc(s.title)}<small>${esc(s.hint||'')}</small></summary><div class="secbody">${s.custom==='surfaces'?`<div id="surfBox" style="display:flex;flex-direction:column;gap:8px">${surfHTML()}</div>`:s.fields.map(fieldHTML).join('')}</div></details>`).join('');
+  applyWhen();
+}
+function applyWhen(){
+  document.querySelectorAll('[data-when]').forEach(e=>{const [k,v]=e.dataset.when.split('=');e.hidden=String(P[k])!==v});
+  document.querySelectorAll('[data-dep]').forEach(e=>{const k=e.dataset.dep;e.classList.toggle('dim',!P[k]||(k==='batOn'&&P.feedMode==='voll'))});
+}
+function setField(id,val){P[id]=val;const e=document.getElementById('f_'+id);if(e){if(e.type==='checkbox')e.checked=!!val;else e.value=val}}
+function rerenderSurf(){const b=document.getElementById('surfBox');if(b)b.innerHTML=surfHTML()}
+
+function genRoof(){
+  const T=P.tplType,L=Math.max(1,P.tplL),D=Math.max(1,P.tplD),t=clamp(P.tplTilt,0,75),az=P.tplAz,c=Math.cos(t*DEG);
+  const norm=(a)=>{a=((a+180)%360+360)%360-180;return a===-180?180:a};
+  const f=(name,o)=>({...SURF_DEF,name,...o});
+  let out=[];
+  const nm=(a)=>'Dach '+azName(norm(a));
+  if(T==='pult')out=[f(nm(az),{az:norm(az),tilt:t,len:L,wid:+(D/c).toFixed(2)})];
+  else if(T==='sattel')[0,180].forEach(d=>out.push(f(nm(az+d),{az:norm(az+d),tilt:t,len:L,wid:+((D/2)/c).toFixed(2)})));
+  else if(T==='walm'){const h=+((D/2)/c).toFixed(2);[0,180].forEach(d=>out.push(f('Walm '+azName(norm(az+d)),{az:norm(az+d),tilt:t,shape:'trapez',len:L,lenTop:+Math.max(0,L-D).toFixed(2),wid:h})));
+    [-90,90].forEach(d=>out.push(f('Walm '+azName(norm(az+d)),{az:norm(az+d),tilt:t,shape:'dreieck',len:D,wid:h})))}
+  else if(T==='zelt'){[0,180].forEach(d=>out.push(f('Zelt '+azName(norm(az+d)),{az:norm(az+d),tilt:t,shape:'dreieck',len:L,wid:+((D/2)/c).toFixed(2)})));
+    [-90,90].forEach(d=>out.push(f('Zelt '+azName(norm(az+d)),{az:norm(az+d),tilt:t,shape:'dreieck',len:D,wid:+((L/2)/c).toFixed(2)})))}
+  else if(T==='flach')out=[f('Flachdach',{mount:'fs',az:norm(az),tilt:15,len:L,wid:D,edge:1,orient:'quer',amin:15})];
+  else out=[f('Flachdach OW',{mount:'fow',az:-90,tilt:10,len:L,wid:D,edge:1})];
+  if(P.tplSkipN&&!T.startsWith('flach'))out=out.filter(s=>Math.abs(s.az)<=112.5);
+  const mod={L:P.modL/1000,B:P.modB/1000,area:P.modL*P.modB/1e6};
+  for(const s of out)if(s.mount==='sd'){const a=layoutSurface({...s,orient:'hoch'},mod).n,b=layoutSurface({...s,orient:'quer'},mod).n;s.orient=b>a?'quer':'hoch'}
+  if(!out.length)out=[f('Dach',{})];
+  return out;
+}
+
+document.getElementById('inputs').addEventListener('input',onInput);
+document.getElementById('inputs').addEventListener('change',onInput);
+document.getElementById('inputs').addEventListener('click',(ev)=>{
+  const t=ev.target;
+  if(t.id==='addSurf'){P.surfaces.push({...SURF_DEF,name:'Dachfläche '+(P.surfaces.length+1),az:P.surfaces.length%2?90:-90});rerenderSurf();schedule()}
+  if(t.id==='tplApply'){P.surfaces=genRoof();rerenderSurf();schedule();toast(`${P.surfaces.length} Dachfläche(n) erzeugt`)}
+  if(t.dataset&&t.dataset.rm!=null){P.surfaces.splice(+t.dataset.rm,1);rerenderSurf();schedule()}
+});
+function onInput(ev){
+  const t=ev.target;
+  if(t.dataset.s!=null){
+    const k=+t.dataset.s,key=t.dataset.sk;let v=t.value;
+    if(t.type==='number'){v=parseFloat(v);if(!isFinite(v))return}
+    P.surfaces[k][key]=v;
+    if((key==='mount'||key==='shape')&&ev.type==='change'){const s=P.surfaces[k];
+      if(key==='mount'){if(v==='fow'){s.tilt=10;s.az=-90}else if(v==='fs'){s.tilt=15;s.orient='quer'}}
+      if(key==='shape'&&v==='trapez'&&!(s.lenTop>0))s.lenTop=+(s.len/2).toFixed(1);
+      rerenderSurf()}
+    schedule();return;
+  }
+  const id=t.dataset.k;if(!id)return;
+  let v;
+  if(t.type==='checkbox')v=t.checked;
+  else if(t.type==='number'){v=parseFloat(t.value);if(!isFinite(v))return}
+  else v=t.value;
+  if(NUMSEL.has(id))v=parseFloat(v);
+  P[id]=v;
+  if(id.startsWith('tpl'))return;
+  if(id==='region'&&v!=='custom'){const r=REGIONS[+v];setField('lat',r[1]);setField('lon',r[2]);setField('ghi',r[3]);setField('tmean',r[4])}
+  if(id==='hPreset'&&HORIZON_PRESETS[v]){const a=HORIZON_PRESETS[v];['hN','hNO','hO','hSO','hS','hSW','hW','hNW'].forEach((k,i)=>setField(k,a[i]))}
+  if(/^h(N|NO|O|SO|S|SW|W|NW)$/.test(id))setField('hPreset','custom');
+  if(id==='modPreset'&&MODULES[v]){for(const [k,x] of Object.entries(MODULES[v]))if(k!=='label')setField(k,x)}
+  if(['pmod','modL','modB','gamma','betaVoc','voc','vmp','imp','isc','lid','deg','modWeight','modPrice'].includes(id))setField('modPreset','custom');
+  if(['lat','lon','ghi','tmean'].includes(id))setField('region','custom');
+  if(id==='invMode'&&v==='manual'&&M&&M.D&&M.nMod>0){const u=M.D.units[0];setField('pacInv',u.kw);setField('invCount',M.D.k);setField('mpptN',u.t.mppt);setField('spmMax',u.t.spm);setField('imppt',u.t.imax);setField('vmaxInv',u.t.vmax);setField('vmppMin',u.t.vmin);setField('vmppMax',u.t.vmpmax);setField('invPrice',Math.round(u.t.price*(M.hybCap&&P.batOn&&P.batCoupling==='DC'?1.4:1)));setField('invPhase',String(u.t.ph))}
+  applyWhen();schedule();
+}
+let timer=null;
+function schedule(){clearTimeout(timer);timer=setTimeout(compute,350)}
+
+/* ===================== Berechnung ===================== */
+function compute(){
+  const t0=performance.now();
+  try{localStorage.setItem(LSKEY,JSON.stringify(P))}catch(e){}
+  M=buildModel(P);
+  R=econ(M,P,{collect:true});
+  REC={bat:recBattery(M,P)};
+  STUDY=null;FAN=null;dirty={ov:1,plan:1,yield:1,self:1,econ:1,orient:1,sens:1,docs:1};
+  const ms=performance.now()-t0;
+  document.getElementById('status').textContent=`Simulation 8760 h × ${P.years} J · ${fmt(ms)} ms`;
+  M.surfs.forEach((s,k)=>{const e=document.getElementById('sinfo'+k);if(e)e.textContent=`${s.lay.n} Module · ${fmt(s.kWp,2)} kWp · ${s.lay.desc}`});
+  renderTab(activeTab);
+  setTimeout(()=>{if(!STUDY){runStudies();['ov','self','econ','sens'].forEach(k=>dirty[k]=1);renderTab(activeTab)}},30);
+}
+function runStudies(){
+  const base=Math.max(M.kWp,1),rc=REC.bat;
+  let sizes=[0,...[0.25,0.5,0.75,1,1.25,1.5].map(f=>niceBat(f*base)),rc.cap].filter(x=>x>=0);
+  sizes=[...new Set(sizes)].sort((a,b)=>a-b);
+  const bat=P.feedMode==='voll'?[]:sizes.map(c=>{const pw=c===rc.cap&&rc.pow?rc.pow:Math.max(2.5,c*0.5);const e=econ(M,P,{batCap:c,batPow:c>0?pw:0});return {c,pw,evq:e.first.evq,aut:e.first.aut,npv:e.npv,irr:e.irr,amort:e.amort,I:e.I,cyc:e.first.cap>0?e.first.bin/e.first.cap:0}});
+  let best=null;for(const b of bat)if(!best||b.npv>best.npv)best=b;
+  const scales=[0.25,0.4,0.55,0.7,0.85,1];
+  const size=M.nMod>=4?scales.map(s=>{const e=econ(M,P,{scale:s});return {s,kWp:Math.round(M.nMod*s)*P.pmod/1000,evq:e.first.evq,aut:e.first.aut,npv:e.npv,irr:e.irr,lcoe:e.lcoe}}):[];
+  const npv0=R.npv;
+  const sv=[['Strompreis ±20 %',{priceF:0.8},{priceF:1.2}],['Investition ±20 %',{investF:1.2},{investF:0.8}],['PV-Ertrag ±10 %',{yieldF:0.9},{yieldF:1.1}],
+    ['Strompreissteigerung ±1 %-Pkt.',{incAdd:-1},{incAdd:1}],['Kalkulationszins ±1 %-Pkt.',{discAdd:1},{discAdd:-1}],['Einspeisevergütung ±20 %',{tariffF:0.8},{tariffF:1.2}]];
+  const sens=sv.map(([l,a,b])=>({l,lo:econ(M,P,a).npv,hi:econ(M,P,b).npv}));
+  const p2=econ(M,P,{priceF:2}).npv,beP=(p2-npv0)!==0?1-npv0/(p2-npv0):null;
+  const i2=econ(M,P,{investF:2}).npv,beI=(i2-npv0)!==0?1-npv0/(i2-npv0):null;
+  STUDY={bat,best,size,sens,beP,beI};
+}
+
+/* ===================== Diagramm-Helfer ===================== */
+function baseOpts(extra){
+  const ink=tok('--ink'),mut=tok('--muted'),line=tok('--line');
+  if(typeof Chart!=='undefined'){Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;Chart.defaults.font.size=12;Chart.defaults.color=mut}
+  const o={responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:ink,boxWidth:12,boxHeight:12}},tooltip:{backgroundColor:tok('--panel'),titleColor:ink,bodyColor:ink,borderColor:line,borderWidth:1}},
+    scales:{x:{grid:{color:line},ticks:{color:mut}},y:{grid:{color:line},ticks:{color:mut}}}};
+  return deepMerge(o,extra||{});
+}
+function deepMerge(a,b){for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')deepMerge(a[k],b[k]);else a[k]=b[k]}return a}
+function chart(id,cfg){if(typeof Chart==='undefined')return;if(CH[id])CH[id].destroy();const c=document.getElementById(id);if(!c)return;CH[id]=new Chart(c,cfg)}
+const C=()=>({dir:tok('--cell'),bat:tok('--teal'),feed:tok('--sun'),curt:tok('--rose'),grid:tok('--grey'),ink:tok('--ink'),good:tok('--good'),bad:tok('--bad'),muted:tok('--muted')});
+
+/* ===================== Reiter ===================== */
+document.getElementById('tabs').addEventListener('click',(e)=>{const b=e.target.closest('[role=tab]');if(!b)return;selectTab(b.dataset.tab)});
+document.getElementById('tabs').addEventListener('keydown',(e)=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const t=[...document.querySelectorAll('[role=tab]')];const i=t.findIndex(x=>x.dataset.tab===activeTab);const n=t[(i+(e.key==='ArrowRight'?1:t.length-1))%t.length];n.focus();selectTab(n.dataset.tab)});
+function selectTab(name){
+  activeTab=name;
+  document.querySelectorAll('[role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===name?'true':'false'));
+  document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==name);
+  try{localStorage.setItem(LSKEY+'.tab',name)}catch(e){}
+  renderTab(name);
+}
+function renderTab(name){
+  if(!M||!R||!dirty[name])return;
+  dirty[name]=0;
+  ({ov:renderOverview,plan:renderPlan,yield:renderYield,self:renderSelf,econ:renderEcon,orient:renderOrient,sens:renderSens,docs:renderDocs})[name]();
+}
+
+/* ---------- Übersicht ---------- */
+function stringSummary(gi){const m=new Map();for(const s of M.D.groupStrings[gi]||[])m.set(s.len,(m.get(s.len)||0)+1);return [...m.entries()].map(([l,c])=>`${c} × ${l}`).join(' + ')||'–'}
+function renderOverview(){
+  const y=R.first,kWp=M.kWp,use=y.pv-y.curt,spec=kWp?use/kWp:0,poaE=M.Ls.poa,pr=poaE>0?y.pv/poaE:0,D=M.D;
+  const k=(l,v,u,s,cls='')=>`<div class="kpi ${cls}"><span class="k">${l}${KTIP[l]?ti(KTIP[l]):''}</span><span class="v">${v}${u?`<small>${u}</small>`:''}</span><span class="s">${s||'&nbsp;'}</span></div>`;
+  const co2=(y.self+y.feed)*P.co2/1e6;
+  document.getElementById('kpis').innerHTML=[
+    k('Anlagenleistung',fmt(kWp,2),'kWp',`${M.nMod} Module · ${D.k} × ${fmt(D.t.kw,D.t.kw%1?1:0)} kW WR`),
+    k('Nutzbarer Jahresertrag',fmt(use),'kWh',`${fmt(spec)} kWh/kWp${y.curt>1?` · ${fmt(y.curt)} abgeregelt`:''}`),
+    k('Performance Ratio',fmt(pr*100,1),'%','DIN EN IEC 61724-1'),
+    k('Eigenverbrauchsquote',fmt(y.evq*100,1),'%',`${fmt(y.self)} kWh selbst genutzt`),
+    k('Autarkiegrad',fmt(y.aut*100,1),'%',`Verbrauch ${fmt(y.load)} kWh`),
+    k('Investition',fmt(R.I),'€',kWp?`${fmt(R.inv.total/kWp)} €/kWp${R.inv.bat>0?' inkl. Speicher':''}`:''),
+    k('Amortisation',R.amort!=null?fmt(R.amort,1):'> '+P.years,'Jahre',R.amortD!=null?`dynamisch ${fmt(R.amortD,1)} J`:'dynamisch nicht erreicht',R.amort!=null&&R.amort<=P.years?'':'neg'),
+    k('Kapitalwert',fmt(R.npv),'€',`bei ${fmt(P.discount,2)} % über ${P.years} J`,R.npv>=0?'pos':'neg'),
+    k('Interner Zinsfuß',R.irr!=null?fmt(R.irr*100,1):'–','%','Eigenkapitalrendite p. a.',R.irr!=null&&R.irr*100>=P.discount?'pos':'neg'),
+    k('Stromgestehungskosten',fmt(R.lcoe*100,1),'ct/kWh',R.inv.bat>0?`nur PV ${fmt(R.lcoePV*100,1)} ct/kWh`:'inkl. Betrieb, abgezinst'),
+    k('Einspeisevergütung',fmt(M.feedMode==='keine'?0:M.tariff,2),'ct/kWh',P.tariffOv>0?'manuell':(M.feedMode==='voll'?'EEG Volleinspeisung':'EEG Teileinspeisung')),
+    k('CO₂-Vermeidung',fmt(co2,1),'t/a',`${fmt(co2*P.years*0.95,0)} t über ${P.years} J`)
+  ].join('');
+  renderRec();
+  document.getElementById('flowSvg').innerHTML=flowSVG();
+  const c=C(),pvT=y.pv||1,lT=y.load||1;
+  const bar=(parts,tot)=>`<div class="flowbar">${parts.filter(p=>p[1]>0).map(p=>`<div style="width:${(p[1]/tot*100).toFixed(2)}%;background:${p[2]}" title="${p[0]}: ${fmt(p[1])} kWh"></div>`).join('')}</div><div class="legend">${parts.filter(p=>p[1]>0.5).map(p=>`<span><i style="background:${p[2]}"></i>${p[0]} <span class="num" style="color:var(--muted)">${fmt(p[1]/tot*100,1)} %</span></span>`).join('')}</div>`;
+  document.getElementById('flows').innerHTML=
+    `<div class="flowrow"><div class="t"><b>Verwendung PV-Strom</b><span class="num">${fmt(y.pv)} kWh</span></div>${bar([['Direktverbrauch',y.dir,c.dir],['In Speicher',y.bin,c.bat],['Einspeisung',y.feed,c.feed],['Abregelung',y.curt,c.curt]],pvT)}</div>`+
+    `<div class="flowrow"><div class="t"><b>Deckung des Verbrauchs</b><span class="num">${fmt(y.load)} kWh</span></div>${bar([['PV direkt',y.dir,c.dir],['Aus Speicher',y.bout,c.bat],['Netzbezug',y.grid,c.grid]],lT)}</div>`+
+    `<p class="note">Einspeisung in Stunden mit negativen Preisen (unvergütet): ${fmt(y.unpaid)} kWh.${y.cap>0?` Speicherverluste: ${fmt(y.bin-y.bout)} kWh/a.`:''}${y.ev>0?` E-Auto: ${fmt(y.ev)} kWh, davon ${fmt(y.evPV)} kWh per Überschussladen.`:''}</p>`;
+  document.getElementById('warns').innerHTML=checks().map(([lv,t])=>`<li><span class="chip ${lv}">${{bad:'Fehler',warn:'Prüfen',info:'Hinweis',ok:'OK'}[lv]}</span><span>${t}</span></li>`).join('');
+  let rows='';
+  for(const gr of M.groups){
+    const st=M.D.groupStrings[M.groups.indexOf(gr)]||[];const mp=[...new Set(st.map(s=>(M.D.k>1?'WR'+(s.inv+1)+' ':'')+s.mppt))].join(', ');
+    rows+=`<tr><td>${esc(gr.name)}</td><td>${MOUNT_LABEL[gr.mount]}</td><td class="n">${fmt(gr.az)}° ${azName(gr.az)}</td><td class="n">${fmt(gr.tilt)}°</td><td class="n">${gr.n}</td><td class="n">${fmt(gr.kWp,2)}</td><td class="n">${stringSummary(M.groups.indexOf(gr))}</td><td>${mp}</td><td class="n">${fmt(gr.poa)}</td><td class="n">${fmt(gr.kWp?gr.dcE/gr.kWp:0)}</td></tr>`;
+  }
+  document.getElementById('cfgTable').innerHTML=`<thead><tr><th>Fläche</th><th>Montage</th><th class="n">Azimut</th><th class="n">Neigung</th><th class="n">Module</th><th class="n">kWp</th><th class="n">Strings × Module</th><th>MPPT</th><th class="n">Einstr. kWh/m²</th><th class="n">DC kWh/kWp</th></tr></thead><tbody>${rows||'<tr><td colspan="10">Keine Module belegt.</td></tr>'}</tbody>`;
+  const gross=M.surfs.reduce((a,s)=>a+s.lay.grossArea,0),totA=M.surfs.reduce((a,s)=>a+s.lay.modArea,0);
+  document.getElementById('cfgNote').textContent=`Modulfläche ${fmt(totA,1)} m² von ${fmt(gross,1)} m² Dachfläche (${fmt(gross?totA/gross*100:0)} %). Modulwirkungsgrad ${fmt(M.mod.eff*100,1)} %. Flächenlast Module + Unterkonstruktion ≈ ${fmt(totA?(M.nMod*P.modWeight/totA+3):0,1)} kg/m² – Statik nach DIN EN 1991 prüfen. Voc je Modul bei ${fmt(P.tmin)} °C: ${fmt(D.V.voC,1)} V.`;
+  const pr0=R.price0,costNo=y.load*pr0,costWith=y.grid*pr0-(y.feed-y.unpaid)*R.tariff+(P.opexIns+P.opexMaint+P.opexMeter);
+  document.getElementById('costY1').innerHTML=`<thead><tr><th>Position</th><th class="n">ohne PV</th><th class="n">mit PV</th></tr></thead><tbody>
+   <tr><td>Netzbezug</td><td class="n">${fmt(y.load)} kWh</td><td class="n">${fmt(y.grid)} kWh</td></tr>
+   <tr><td>Stromkosten (Arbeitspreis ${fmt(P.price,1)} ct/kWh)</td><td class="n">${eur(costNo)}</td><td class="n">${eur(y.grid*pr0)}</td></tr>
+   <tr><td>Einspeiseerlös (${fmt(R.tariff*100,2)} ct/kWh)</td><td class="n">–</td><td class="n">− ${eur((y.feed-y.unpaid)*R.tariff)}</td></tr>
+   <tr><td>Betriebskosten PV</td><td class="n">–</td><td class="n">${eur(P.opexIns+P.opexMaint+P.opexMeter)}</td></tr>
+   <tr class="sum"><td>Saldo Jahr 1</td><td class="n">${eur(costNo)}</td><td class="n">${eur(costWith)}</td></tr>
+   <tr class="hl"><td>Vorteil Jahr 1</td><td></td><td class="n">${eur(costNo-costWith)}</td></tr></tbody>`;
+}
+function renderRec(){
+  const D=M.D,u=D.units[0],el=document.getElementById('recBox');
+  if(M.nMod===0){el.innerHTML='<div class="recbox"><span class="det">Keine Module belegt – Dachflächen prüfen.</span></div>';return}
+  const hyb=M.hybCap&&P.batCoupling==='DC';
+  const invTxt=`${D.k} × ${invName(u)}`;
+  const mpptUsed=D.units.reduce((a,x)=>a+x.mppts.length,0);
+  const invDet=`${u.t.mppt} MPP-Tracker je Gerät (${mpptUsed} belegt) · DC/AC ${fmt(D.r,2)} · ${D.strings.length} String${D.strings.length>1?'s':''} · ${hyb&&!D.manual?'speicherfähig (Hybrid)':'String-WR'}`;
+  const b=REC.bat,best=STUDY&&STUDY.best;
+  let batBig,batDet;
+  if(P.feedMode==='voll'){batBig='nicht sinnvoll';batDet='Bei Volleinspeisung gibt es keinen Eigenverbrauch.'}
+  else if(!b.cap){batBig='kein Speicher';batDet=`Zu wenig Überschuss oder Nachtbedarf (Median Abend/Nacht ${fmt(b.night,1)} kWh/Tag im Sommerhalbjahr).`}
+  else{batBig=`${fmt(b.cap,1)} kWh · ${fmt(b.pow,1)} kW`;batDet=`Deckt an 75 % der Tage im Sommerhalbjahr den Abend-/Nachtbedarf (Median ${fmt(b.night,1)} kWh/Tag). Faustregel 1–1,5 kWh je kWp: ${fmt(M.kWp,1)}–${fmt(M.kWp*1.5,1)} kWh.`}
+  let econTxt='Wirtschaftlicher Vergleich wird berechnet …';
+  if(best&&STUDY.bat.length){const zero=STUDY.bat.find(x=>x.c===0);econTxt=best.c===0?`<b>Wirtschaftlich:</b> ohne Speicher am günstigsten (Kapitalwert ${eur(zero.npv)}). Bester Speicher: ${(()=>{const nz=STUDY.bat.filter(x=>x.c>0).sort((a,c)=>c.npv-a.npv)[0];return nz?`${fmt(nz.c,1)} kWh mit ${eur(nz.npv)}`:'–'})()}.`
+    :`<b>Wirtschaftlich günstigste Größe:</b> ${fmt(best.c,1)} kWh (Kapitalwert ${eur(best.npv)} gegenüber ${eur(zero.npv)} ohne Speicher).`}
+  const state=P.batOn&&P.feedMode!=='voll'?`Eingerechnet: ${fmt(P.batCap,1)} kWh / ${fmt(P.batPow,1)} kW.`:'Derzeit nicht in der Wirtschaftlichkeit enthalten.';
+  el.innerHTML=`<div class="recbox"><span class="lbl"><span>Wechselrichter${D.manual?' (manuell festgelegt)':' (Empfehlung)'}</span><span>${eur(R.inv.inv)}</span></span><span class="big">${invTxt}</span><span class="det">${invDet}</span><span class="det">${D.strings.map(s=>`<b>${s.id}</b> ${s.len} Mod.`).join(' · ')}</span>${!D.manual&&D.alts.length>1?`<span class="det">Alternative: ${D.alts.slice(1,3).map(a=>`${a.k} × ${fmt(a.t.kw,a.t.kw%1?1:0)} kW`).join(', ')} – Details im Reiter „Belegung &amp; Verschaltung“.</span>`:''}</div>
+   <div class="recbox"><span class="lbl"><span>Batteriespeicher (Empfehlung)</span>${b.cap?`<span>${eur(b.cap*P.batPrice*(1+P.vat/100))}</span>`:''}</span><span class="big">${batBig}</span><span class="det">${batDet}</span><span class="det">${econTxt}</span><span class="det">${state}</span>${b.cap?`<span><button class="btn sm" type="button" id="btnApplyBat">Empfehlung in Wirtschaftlichkeit übernehmen</button>${best&&best.c>0&&best.c!==b.cap?` <button class="btn sm" type="button" id="btnApplyBatEco">Wirtschaftliches Optimum übernehmen</button>`:''}</span>`:''}</div>`;
+}
+document.getElementById('recBox').addEventListener('click',(e)=>{
+  if(e.target.id==='btnApplyBat'){setField('batOn',true);setField('batCap',REC.bat.cap);setField('batPow',REC.bat.pow);applyWhen();compute();toast('Speicherempfehlung übernommen')}
+  if(e.target.id==='btnApplyBatEco'&&STUDY&&STUDY.best){setField('batOn',true);setField('batCap',STUDY.best.c);setField('batPow',STUDY.best.pw);applyWhen();compute();toast('Wirtschaftliches Optimum übernommen')}
+});
+function flowSVG(){
+  const y=R.first,bat=y.cap>0;
+  const vals=[y.dir,y.feed,y.grid,y.bin,y.bout];const mx=Math.max(...vals,1);
+  const w=(v)=>v>0.5?1.5+20*v/mx:0;
+  const col={dir:'var(--cell)',bat:'var(--teal)',feed:'var(--sun)',grid:'var(--grey)'};
+  const arrow=(id,c)=>`<marker id="ar-${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0L10,5L0,10z" fill="${c}"/></marker>`;
+  const path=(d,v,c,id,lx,ly,lab)=>v>0.5?`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w(v).toFixed(1)}" stroke-opacity=".85" marker-end="url(#ar-${id})"/><text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" fill="var(--ink)">${lab} <tspan font-weight="600">${fmt(v)} kWh</tspan></text>`:'';
+  const node=(x,y0,wd,h,t1,t2,c)=>`<rect x="${x}" y="${y0}" width="${wd}" height="${h}" rx="6" fill="var(--panel2)" stroke="${c}" stroke-width="1.5"/><text x="${x+wd/2}" y="${y0+h/2-4}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--ink)">${t1}</text><text x="${x+wd/2}" y="${y0+h/2+14}" text-anchor="middle" font-size="12" fill="var(--muted)">${t2}</text>`;
+  let s=`<svg viewBox="0 0 640 300" role="img" aria-label="Energiefluss" style="width:100%;height:auto;font-family:var(--f-body)"><defs>${arrow('d',col.dir)}${arrow('b',col.bat)}${arrow('f',col.feed)}${arrow('g',col.grid)}</defs>`;
+  s+=path('M150,125 C300,125 330,55 492,55',y.feed,col.feed,'f',330,78,'Einspeisung');
+  s+=path('M150,160 C300,160 330,230 492,230',y.dir,col.dir,'d',300,182,'Direkt');
+  if(bat){s+=path('M95,185 C95,262 160,262 242,262',y.bin,col.bat,'b',150,288,'Laden');s+=path('M378,262 C430,262 450,258 492,252',y.bout,col.bat,'b',430,288,'Entladen')}
+  s+=path('M565,85 L565,200',y.grid,col.grid,'g',598,148,'');
+  if(y.grid>0.5)s+=`<text x="598" y="132" text-anchor="middle" font-size="12" fill="var(--ink)">Bezug</text>`;
+  s+=node(20,95,130,90,'PV-Anlage',`${fmt(y.pv)} kWh AC`,'var(--sun)');
+  s+=node(495,20,130,65,'Netz',`Einsp. ${fmt(y.feed)} kWh`,'var(--grey)');
+  s+=node(495,200,130,70,'Verbrauch',`${fmt(y.load)} kWh`,'var(--cell)');
+  if(bat)s+=node(245,235,130,55,'Speicher',`${fmt(y.cap,1)} kWh nutzbar`,'var(--teal)');
+  if(y.curt>0.5)s+=`<text x="85" y="88" text-anchor="middle" font-size="11.5" fill="var(--rose)">Abregelung ${fmt(y.curt)} kWh</text>`;
+  s+=`<text x="85" y="18" text-anchor="middle" font-size="11.5" fill="var(--muted)">DC ${fmt(y.dcIn)} kWh</text><text x="85" y="34" text-anchor="middle" font-size="11.5" fill="var(--muted)">WR-Verluste ${fmt(y.invLoss+y.clipLoss)} kWh</text>`;
+  return s+'</svg>';
+}
+function checks(){
+  const out=[],y=R.first,kWp=M.kWp,D=M.D,mod=M.mod;
+  if(M.nMod===0){out.push(['bad','Keine Module belegbar – Dachmaße, Randabstand oder Modullage prüfen.']);return out}
+  const mt=mpptRows();
+  for(const r of mt){
+    if(r.vocS==='bad')out.push(['bad',`${r.lab}: Leerlaufspannung ${fmt(r.voc)} V bei ${P.tmin} °C über ${r.t.vmax} V (DIN VDE 0100-712).`]);
+    if(r.vminS!=='ok')out.push(['warn',`${r.lab}: MPP-Spannung bei 70 °C nur ${fmt(r.vmpH)} V – unter dem MPP-Bereich (${r.t.vmin} V).`]);
+    if(r.vmaxS!=='ok')out.push(['warn',`${r.lab}: MPP-Spannung bei ${P.tmin} °C ${fmt(r.vmpC)} V über dem MPP-Bereich (${r.t.vmpmax} V).`]);
+    if(r.iS!=='ok')out.push(['warn',`${r.lab}: Strom ${fmt(r.I,1)} A über ${r.t.imax} A je Tracker – Leistung wird begrenzt.`]);
+    if(r.m.over)out.push(['bad',`${r.lab}: mehr Eingänge belegt als MPP-Tracker vorhanden – weiteren Wechselrichter vorsehen.`]);
+  }
+  const shortG=M.groups.filter((g,gi)=>D.plans[gi]&&!D.plans[gi].ok);
+  for(const g of shortG)out.push(['warn',`${esc(g.name)} (${azName(g.az)}): ${g.n} Module reichen für keinen zulässigen String – Modulwechselrichter oder Optimierer prüfen.`]);
+  const vd=Math.max(...D.strings.map(s=>mod.imp*M.Rs/(s.len*mod.vmp)),0);
+  if(vd>0.01)out.push(['warn',`DC-Spannungsfall bis ${fmt(vd*100,2)} % > 1 % – Querschnitt erhöhen oder Leitung kürzen.`]);
+  if(D.hybFallback)out.push(['info','In dieser Leistungsklasse gibt es keinen Hybrid-Wechselrichter – Speicher wird AC-gekoppelt gerechnet.']);
+  for(const u of D.units){const r=u.dc/u.kw;if(r>1.4)out.push(['warn',`WR ${D.units.indexOf(u)+1}: DC/AC ${fmt(r,2)} – hohe Clipping-Verluste.`])}
+  out.push(['ok',`DC/AC-Verhältnis gesamt ${fmt(kWp/M.pacN,2)}, Clipping ${fmt(y.clipLoss)} kWh/a.`]);
+  if(D.units.some(u=>u.t.ph===1)&&M.pacN>4.6)out.push(['bad','Einphasige Einspeisung über 4,6 kVA unzulässig (VDE-AR-N 4105) – dreiphasige Geräte oder Verteilung auf Phasen.']);
+  if(M.pacN>4.6)out.push(['info','Über 4,6 kVA: dreiphasige Einspeisung (VDE-AR-N 4105, Schieflastgrenze 4,6 kVA).']);
+  if(M.pacN>30)out.push(['info','Anlage > 30 kVA: zentraler NA-Schutz erforderlich (VDE-AR-N 4105).']);
+  if(M.pacN>135)out.push(['info','Anlage > 135 kW: Anlagenzertifikat nach VDE-AR-N 4105 / 4110 erforderlich.']);
+  if(kWp>7)out.push(['info','> 7 kWp: Pflichteinbau intelligentes Messsystem (MsbG); mit Steuerbox entfällt die 60-%-Begrenzung.']);
+  if(kWp>30)out.push(['info','> 30 kWp: Nullsteuersatz (§ 12 Abs. 3 UStG) und Steuerbefreiung (§ 3 Nr. 72 EStG) nicht pauschal – steuerlich prüfen.']);
+  if(kWp>100&&P.feedMode!=='keine')out.push(['warn','> 100 kWp: Pflicht zur Direktvermarktung (§ 21 EEG) – Vergütung als Marktprämie, Wert manuell prüfen.']);
+  if(y.curt>0.02*y.pv)out.push(['warn',`Abregelung an der Einspeisegrenze: ${fmt(y.curt)} kWh/a (${fmt(y.curt/y.pv*100,1)} %). Speicher, netzdienliches Laden oder iMSys mit Steuerbox prüfen.`]);
+  if(y.cap>0){const cyc=y.bin/y.cap;if(cyc<150)out.push(['info',`Speicher erreicht nur ${fmt(cyc)} Vollzyklen/a – eher überdimensioniert.`])}
+  for(const s of M.surfs)for(const u of s.lay.subs)if(u.undrawn>0)out.push(['warn',`${esc(s.s.name)}: ${u.n} Module manuell vorgegeben, aber nur ${u.cap} Plätze – Plan zeigt ${u.cap}.`]);
+  const totA=M.surfs.reduce((a,s)=>a+s.lay.modArea,0),w=totA?M.nMod*P.modWeight/totA+3:0;
+  if(P.surfaces.some(s=>s.mount==='fs'||s.mount==='fow'))out.push(['info','Flachdach: Ballastierung/Windsog nach DIN EN 1991-1-4 und Herstellergutachten; Lastreserve prüfen.']);
+  if(w>20)out.push(['warn',`Flächenlast ≈ ${fmt(w,1)} kg/m² – Tragwerk prüfen lassen.`]);
+  if(P.feedMode==='voll'&&P.batOn)out.push(['info','Volleinspeisung: Speicher bleibt in der Rechnung unberücksichtigt.']);
+  if(M.custom&&P.profile==='CUSTOM'&&!M.custom.data)out.push(['warn',`Eigener Lastgang: ${M.custom.n} Werte erkannt, erwartet 8760 oder 35040 – Standardprofil H0 verwendet.`]);
+  return out;
+}
+
+/* ---------- Belegung & Verschaltung ---------- */
+function mpptRows(){
+  const D=M.D,mod=M.mod,V=D.V,out=[];
+  D.units.forEach((u,j)=>u.mppts.forEach(m=>{
+    const t=u.t,gr=M.groups[m.g];
+    const voc=m.len*V.voC,vmpH=m.len*V.vmpH,vmpC=m.len*V.vmpC,I=m.cnt*mod.imp,Isc=m.cnt*mod.isc*1.25;
+    out.push({u,j,m,t,gr,lab:`${D.k>1?'WR '+(j+1)+' / ':''}MPPT ${m.letter}`,voc,vmpH,vmpC,I,Isc,
+      vocS:voc<=t.vmax?'ok':'bad',vminS:vmpH>=t.vmin?'ok':'warn',vmaxS:vmpC<=t.vmpmax?'ok':'warn',iS:I<=t.imax+1e-9?'ok':'warn',iscS:Isc<=t.imax*1.6?'ok':'warn'});
+  }));
+  return out;
+}
+function roofSVG(sr){
+  const lay=sr.lay,s=sr.s,D=M.D;
+  const L=Math.max(lay.L,0.5),Wd=Math.max(lay.Wd,0.5),mx=Math.max(L,Wd);
+  const fs=clamp(mx/34,0.16,0.7),pad=fs*3.2;
+  const vbW=L+2*pad,vbH=Wd+2*pad+fs*1.5;
+  const X=(x)=>x+pad,Y=(y)=>pad+Wd-y;
+  const P2=(x,y)=>`${X(x).toFixed(3)},${Y(y).toFixed(3)}`;
+  let h=`<svg class="roofsvg" viewBox="0 0 ${vbW.toFixed(2)} ${vbH.toFixed(2)}" role="img" aria-label="Belegungsplan ${esc(s.name)}" style="font-family:var(--f-body)">`;
+  h+=`<polygon points="${lay.poly.map(([x,y])=>P2(x,y)).join(' ')}" fill="var(--roof)" stroke="var(--roofline)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+  if(lay.shape==='rect'&&lay.edge>0)h+=`<rect x="${X(lay.edge)}" y="${Y(Wd-lay.edge)}" width="${Math.max(0,L-2*lay.edge)}" height="${Math.max(0,Wd-2*lay.edge)}" fill="none" stroke="var(--roofline)" stroke-dasharray="4 3" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  const groupIdx=(ui)=>M.groups.findIndex(g=>g.si===M.surfs.indexOf(sr)&&g.ui===ui);
+  const lines=[],labels=[];
+  lay.subs.forEach((u,ui)=>{
+    const gi=groupIdx(ui);const strs=gi>=0?D.groupStrings[gi]:[];const used=Math.min(u.n,u.slots.length);
+    let pos=0;
+    for(const st of strs){
+      const chunk=u.slots.slice(pos,Math.min(pos+st.len,used));pos+=st.len;if(!chunk.length)continue;
+      const c=scol(st.ci);
+      for(const sl of chunk)h+=`<rect x="${X(sl.x).toFixed(3)}" y="${Y(sl.y+sl.h).toFixed(3)}" width="${sl.w.toFixed(3)}" height="${sl.h.toFixed(3)}" style="fill:${c};fill-opacity:.26;stroke:${c}" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+      const pts=chunk.map(sl=>P2(sl.x+sl.w/2,sl.y+sl.h/2));
+      lines.push(`<polyline points="${pts.join(' ')}" fill="none" style="stroke:${c}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`);
+      const a=chunk[0],b=chunk[chunk.length-1],r=fs*0.55;
+      const mark=(sl,sym)=>`<circle cx="${X(sl.x+sl.w/2)}" cy="${Y(sl.y+sl.h/2)}" r="${r}" style="fill:${c}"/><text x="${X(sl.x+sl.w/2)}" y="${Y(sl.y+sl.h/2)+r*0.42}" font-size="${(r*1.3).toFixed(3)}" text-anchor="middle" fill="var(--panel)" font-weight="700">${sym}</text>`;
+      labels.push(mark(b,'−'),mark(a,'+'));
+      labels.push(`<text x="${X(a.x+a.w/2)}" y="${Y(a.y+a.h/2)-r*1.3}" font-size="${fs.toFixed(3)}" text-anchor="middle" font-weight="700" style="fill:${c}" paint-order="stroke" stroke="var(--panel)" stroke-width="${(fs*0.25).toFixed(3)}">${st.id}</text>`);
+    }
+    for(const sl of u.slots.slice(used))h+=`<rect x="${X(sl.x).toFixed(3)}" y="${Y(sl.y+sl.h).toFixed(3)}" width="${sl.w.toFixed(3)}" height="${sl.h.toFixed(3)}" fill="none" stroke="var(--muted)" stroke-dasharray="3 3" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  });
+  h+=lines.join('')+labels.join('');
+  const bl=lay.pitched?'Traufe':'Dachrand';
+  h+=`<text x="${X(L/2)}" y="${Y(0)+fs*1.5}" font-size="${fs}" text-anchor="middle" fill="var(--muted)">${bl} · ${fmt(L,2)} m · Blickrichtung ${azName(s.az)}</text>`;
+  if(lay.pitched)h+=`<text x="${X(L/2)}" y="${Y(Wd)-fs*0.7}" font-size="${fs}" text-anchor="middle" fill="var(--muted)">${lay.shape==='dreieck'?'Gratspitze':'First'}${lay.shape==='trapez'?` · ${fmt(s.lenTop,2)} m`:''}</text>`;
+  h+=`<text x="${X(0)-fs*0.8}" y="${Y(Wd/2)}" font-size="${fs}" text-anchor="middle" fill="var(--muted)" transform="rotate(-90 ${X(0)-fs*0.8} ${Y(Wd/2)})">${fmt(Wd,2)} m</text>`;
+  return h+'</svg>';
+}
+function schematicSVG(){
+  const D=M.D,units=D.units,rowH=40,gapY=24,mX=10,mW=300,wX=360,wW=180,bus=600,rX=640,rW=230;
+  let y=30,s='';const busY=[];
+  const txt=(x,yy,t,o='')=>`<text x="${x}" y="${yy}" font-size="12" fill="var(--ink)" ${o}>${t}</text>`;
+  const ln=(x1,y1,x2,y2,c='var(--ink)',w=1.5,da='')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"${da?` stroke-dasharray="${da}"`:''}/>`;
+  const box=(x,yy,w,h,c='var(--line)')=>`<rect x="${x}" y="${yy}" width="${w}" height="${h}" rx="5" fill="var(--panel2)" stroke="${c}" stroke-width="1.3"/>`;
+  const batOn=P.batOn&&P.feedMode!=='voll'&&P.batCap>0,dcBat=batOn&&M.batDC;
+  s+=txt(mX,16,'PV-Generator (MPP-Tracker)','font-weight="600" fill="var(--muted)"')+txt(wX,16,'Wechselrichter','font-weight="600" fill="var(--muted)"')+txt(rX,16,'Netzanschluss und Verbraucher','font-weight="600" fill="var(--muted)"');
+  units.forEach((u,j)=>{
+    const m=Math.max(1,u.mppts.length),hb=Math.max(m*rowH-8,72),y0=y;
+    u.mppts.forEach((mp,mi)=>{
+      const yy=y0+mi*rowH,gr=M.groups[mp.g],c=scol(mp.strings[0].ci),cy=yy+(rowH-8)/2;
+      s+=box(mX,yy,mW,rowH-8)+`<rect x="${mX}" y="${yy}" width="6" height="${rowH-8}" rx="2" style="fill:${c}"/>`;
+      s+=txt(mX+14,yy+14,`MPPT ${mp.letter} · ${mp.cnt} × ${mp.len} Module · ${mp.strings.map(x=>x.id).join(', ')}`,'font-weight="600"');
+      s+=txt(mX+14,yy+28,`${esc(gr.name)} · ${azName(gr.az)} ${fmt(gr.tilt)}° · ${fmt(mp.kWp,2)} kWp`,'fill="var(--muted)"');
+      s+=ln(mX+mW,cy,wX,cy,c,2);
+    });
+    s+=box(wX,y0,wW,hb,'var(--cell)');
+    const hy=hybLabel(j);
+    s+=txt(wX+10,y0+18,`WR ${j+1}`,'font-weight="700"')+txt(wX+10,y0+34,`${fmt(u.kw,u.kw%1?1:0)} kW AC · ${u.t.ph===1?'1~':'3~'} · ${u.t.mppt} MPPT`)+txt(wX+10,y0+50,hy,'fill="var(--muted)"')+txt(wX+10,y0+66,`DC/AC ${fmt(u.dc/u.kw,2)}`,'fill="var(--muted)"');
+    const cy=y0+hb/2;s+=ln(wX+wW,cy,bus,cy);busY.push(cy);
+    y+=hb+gapY;
+    if(j===0&&dcBat){s+=ln(wX+wW/2,y0+hb,wX+wW/2,y,'var(--teal)',2)+box(wX,y,wW,46,'var(--teal)')+txt(wX+10,y+18,`Speicher ${fmt(P.batCap,1)} kWh`,'font-weight="600"')+txt(wX+10,y+34,`${fmt(P.batPow,1)} kW · DC-gekoppelt`,'fill="var(--muted)"');y+=46+gapY}
+  });
+  if(batOn&&!dcBat){s+=box(wX,y,wW,46,'var(--teal)')+txt(wX+10,y+18,`Speicher ${fmt(P.batCap,1)} kWh`,'font-weight="600"')+txt(wX+10,y+34,`${fmt(P.batPow,1)} kW · AC (Batterie-WR)`,'fill="var(--muted)"')+ln(wX+wW,y+23,bus,y+23,'var(--teal)',2);busY.push(y+23);y+=46+gapY}
+  const chain=[['Netz','öffentliches Niederspannungsnetz'],['Zählerplatz (VDE-AR-N 4100)',M.kWp>7?'Zweirichtungszähler iMSys + Steuerbox':'Zweirichtungszähler']];
+  if(M.pacN>30)chain.push(['NA-Schutz zentral','VDE-AR-N 4105, Kuppelschalter']);
+  chain.push(['AC-Überspannungsschutz','Typ 1+2, DIN VDE 0100-443/-534']);
+  let ry=30;const bh=44,bg=16;
+  chain.forEach(([a,b],i)=>{s+=box(rX,ry,rW,bh,i===0?'var(--grey)':'var(--line)')+txt(rX+10,ry+18,a,'font-weight="600"')+txt(rX+10,ry+34,b,'fill="var(--muted)" font-size="11"');if(i>0)s+=ln(rX+rW/2,ry-bg,rX+rW/2,ry);ry+=bh+bg});
+  const lastMid=ry-bg-bh/2;s+=ln(bus,lastMid,rX,lastMid);busY.push(lastMid);
+  ry+=8;
+  const loads=[['Hausverbrauch',`${fmt(P.annual)} kWh/a`]];
+  if(P.hpKwh>0)loads.push(['Wärmepumpe (§ 14a EnWG)',`${fmt(P.hpKwh)} kWh/a`]);
+  if(P.evOn)loads.push(['Wallbox (§ 14a EnWG)',`${fmt(P.evPow,1)} kW · ${fmt(M.evDaily*365)} kWh/a`]);
+  loads.forEach(([a,b])=>{s+=box(rX,ry,rW,bh)+txt(rX+10,ry+18,a,'font-weight="600"')+txt(rX+10,ry+34,b,'fill="var(--muted)" font-size="11"');s+=ln(bus,ry+bh/2,rX,ry+bh/2);busY.push(ry+bh/2);ry+=bh+bg});
+  const top=Math.min(...busY),bot=Math.max(...busY);
+  s+=ln(bus,top,bus,bot,'var(--ink)',3.5);
+  s+=txt(bus+6,bot+16,'Unterverteilung AC','font-size="10.5" fill="var(--muted)"');
+  const H=Math.max(y,ry,bot+24)+6;
+  return `<svg viewBox="0 0 ${rX+rW+10} ${H}" role="img" aria-label="Übersichtsschaltplan" style="font-family:var(--f-body)">${s}</svg>`;
+}
+function hybLabel(j){return (M.hybCap&&P.batCoupling==='DC'&&P.batOn&&j===0&&!M.D.manual)?'Hybrid-WR (Speicher)':(M.hybCap&&!M.D.manual?'String-WR, hybridfähig':'String-WR')}
+function acSizing(u){
+  const I=u.t.ph===1?u.kw*1000/230:u.kw*1000/(Math.sqrt(3)*400);
+  const LS=[10,13,16,20,25,32,40,50,63,80,100,125,160,200,250,315].find(x=>x>=I)||Math.ceil(I);
+  const CAB=[[2.5,21],[4,28],[6,36],[10,50],[16,66],[25,84],[35,104],[50,125],[70,160],[95,194],[120,225],[150,260],[185,297],[240,350]];
+  const cs=(CAB.find(c=>c[1]>=LS)||CAB[CAB.length-1])[0];
+  return {I,LS,cs,type:cs<=16?'NYM-J':'NYY-J',cores:u.t.ph===1?3:5};
+}
+function renderPlan(){
+  const D=M.D,mod=M.mod;
+  if(M.nMod===0){document.getElementById('invSummary').innerHTML='<p class="note">Keine Module belegt.</p>';['roofPlans','schematic'].forEach(i=>document.getElementById(i).innerHTML='');['mpptTable','cableTable','bomTable'].forEach(i=>document.getElementById(i).innerHTML='');return}
+  // WR-Auslegung
+  const alts=D.manual?[]:D.alts;
+  let h=`<p style="margin:0 0 8px">${D.manual?'Manuell festgelegt':'Empfehlung'}: <b>${D.k} × ${invName(D.units[0])}</b>, ${D.t.mppt} MPP-Tracker je Gerät, max. ${D.t.spm} String${D.t.spm>1?'s':''} je Tracker, ${fmt(D.t.vmin)}–${fmt(D.t.vmpmax)} V MPP-Bereich, max. ${fmt(D.t.vmax)} V DC. Ziel DC/AC ${fmt(P.dcac,2)}, erreicht ${fmt(D.r,2)}.</p>`;
+  h+=`<div class="tablewrap"><table><thead><tr><th>Gerät</th><th class="n">AC-Leistung</th><th class="n">DC-Leistung</th><th class="n">DC/AC</th><th class="n">MPPT belegt</th><th>Strings</th><th>AC-Anschluss</th></tr></thead><tbody>${D.units.map((u,j)=>{const a=acSizing(u);return `<tr><td>WR ${j+1} · ${hybLabel(j)}</td><td class="n">${fmt(u.kw,1)} kW</td><td class="n">${fmt(u.dc,2)} kWp</td><td class="n">${fmt(u.dc/u.kw,2)}</td><td class="n">${u.mppts.length} / ${u.t.mppt}</td><td>${u.mppts.flatMap(m=>m.strings.map(s=>`${s.id} (${s.len})`)).join(', ')}</td><td>${a.type} ${a.cores}×${fmt(a.cs,1)} mm², LS B${a.LS}</td></tr>`}).join('')}</tbody></table></div>`;
+  if(alts.length>1)h+=`<h3 style="margin-top:12px">Geprüfte Konfigurationen</h3><div class="tablewrap"><table><thead><tr><th>Variante</th><th class="n">AC gesamt</th><th class="n">DC/AC</th><th class="n">MPPT benötigt / vorhanden</th><th class="n">Richtpreis WR</th><th>Bewertung</th></tr></thead><tbody>${alts.map((a,i)=>`<tr class="${i===0?'hl':''}"><td>${a.k} × ${fmt(a.t.kw,a.t.kw%1?1:0)} kW ${a.t.ph===1?'1~':'3~'}</td><td class="n">${fmt(a.k*a.t.kw,1)} kW</td><td class="n">${fmt(a.r,2)}</td><td class="n">${a.need} / ${a.k*a.t.mppt}</td><td class="n">${eur(a.k*a.t.price*P.invPriceF/100)}</td><td>${i===0?'empfohlen':a.okV?'möglich':'Spannungsgrenzen verletzt'}</td></tr>`).join('')}</tbody></table></div>`;
+  document.getElementById('invSummary').innerHTML=h;
+  // Dachpläne
+  document.getElementById('roofPlans').innerHTML=M.surfs.map(sr=>{
+    const strs=[];sr.lay.subs.forEach((u,ui)=>{const gi=M.groups.findIndex(g=>g.si===M.surfs.indexOf(sr)&&g.ui===ui);if(gi>=0)for(const st of D.groupStrings[gi])strs.push({st,az:u.az})});
+    const fowNote=sr.s.mount==='fow'?'<p class="note">Ost-West-Doppelreihen: untere Hälfte jeder Doppelreihe zeigt zur Blickrichtung, obere Hälfte in die Gegenrichtung.</p>':'';
+    return `<div class="card"><h2>${esc(sr.s.name)}</h2><p class="note" style="margin:0 0 8px">${MOUNT_LABEL[sr.s.mount]}${sr.lay.pitched?' · '+SHAPE_LABEL[sr.lay.shape]:''} · ${fmt(sr.s.tilt)}° · ${azName(sr.s.az)} (${fmt(sr.s.az)}°) · ${sr.lay.n} Module · ${fmt(sr.kWp,2)} kWp · ${sr.lay.desc}</p>${roofSVG(sr)}<div class="strleg">${strs.map(({st,az})=>`<span><i style="background:${scol(st.ci)}"></i>${st.id}: ${st.len} Mod. → ${D.k>1?'WR '+(st.inv+1)+' / ':''}MPPT ${st.mppt}${sr.s.mount==='fow'?' ('+azName(az)+')':''}</span>`).join('')}</div>${fowNote}</div>`;
+  }).join('');
+  document.getElementById('schematic').innerHTML=schematicSVG();
+  // MPPT-Prüfung
+  const rows=mpptRows(),cell=(v,st,d=0)=>`<td class="n ${st}c">${fmt(v,d)}</td>`;
+  document.getElementById('mpptTable').innerHTML=`<thead><tr><th>Eingang</th><th>Fläche</th><th class="n">Strings × Module</th><th class="n">kWp</th><th class="n">Voc ${fmt(P.tmin)} °C [V]</th><th class="n">Vmpp 70 °C [V]</th><th class="n">Vmpp ${fmt(P.tmin)} °C [V]</th><th class="n">Impp [A]</th><th class="n">Grenzen WR</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${r.lab}</td><td>${esc(r.gr.name)} · ${azName(r.gr.az)}</td><td class="n">${r.m.cnt} × ${r.m.len}</td><td class="n">${fmt(r.m.kWp,2)}</td>${cell(r.voc,r.vocS)}${cell(r.vmpH,r.vminS)}${cell(r.vmpC,r.vmaxS)}${cell(r.I,r.iS,1)}<td class="n">≤ ${r.t.vmax} V · ${r.t.vmin}–${r.t.vmpmax} V · ≤ ${r.t.imax} A</td></tr>`).join('')}</tbody>`;
+  document.getElementById('mpptNote').textContent=`Grün = Grenzwert eingehalten. Modulwerte: Voc ${fmt(mod.voc,1)} V, Vmpp ${fmt(mod.vmp,1)} V, Impp ${fmt(mod.imp,2)} A, Temperaturkoeffizient Voc ${fmt(P.betaVoc,2)} %/K. Nachweis nach DIN VDE 0100-712 und DIN EN IEC 62548-1.`;
+  // Kabel
+  const Rs=M.Rs;
+  document.getElementById('cableTable').innerHTML=`<thead><tr><th>String</th><th class="n">Module</th><th class="n">Länge hin+rück</th><th class="n">Querschnitt</th><th class="n">R</th><th class="n">ΔU</th><th class="n">Verlust STC</th></tr></thead><tbody>${D.strings.map(s=>{const vd=mod.imp*Rs/(s.len*mod.vmp);return `<tr><td>${s.id}</td><td class="n">${s.len}</td><td class="n">${fmt(2*P.dcLen)} m</td><td class="n">${P.dcCs} mm²</td><td class="n">${fmt(Rs,3)} Ω</td><td class="n ${vd>0.01?'warnc':'okc'}">${fmt(vd*100,2)} %</td><td class="n">${fmt(mod.imp*mod.imp*Rs)} W</td></tr>`}).join('')}</tbody>`;
+  // Stückliste
+  const bom=[];
+  bom.push(['PV-Modul',MODULES[P.modPreset]?MODULES[P.modPreset].label:`${P.pmod} Wp, ${P.modL} × ${P.modB} mm`,M.nMod,'Stk']);
+  const ug=new Map();D.units.forEach((u,j)=>{const k=`${invName(u)}, ${u.t.mppt} MPPT, ${hybLabel(j)}`;ug.set(k,(ug.get(k)||0)+1)});
+  for(const [k,c] of ug)bom.push(['Wechselrichter',k,c,'Stk']);
+  if(P.batOn&&P.feedMode!=='voll'&&P.batCap>0)bom.push(['Batteriespeicher (LFP)',`${fmt(P.batCap,1)} kWh, ${fmt(P.batPow,1)} kW, ${M.batDC?'DC-gekoppelt':'AC-gekoppelt'}`,1,'Stk']);
+  if(P.optim)bom.push(['Leistungsoptimierer','modulweise',M.nMod,'Stk']);
+  let rail=0,hooks=0,endc=0,midc=0,flat=0;
+  for(const sr of M.surfs){
+    if(sr.lay.pitched){for(const u of sr.lay.subs){let rem=u.n;for(const r of u.rows){if(rem<=0)break;const c=Math.min(rem,r.length);rem-=c;const rw=c*sr.lay.mw+(c-1)*sr.lay.g+0.1;rail+=2*rw;hooks+=2*(Math.ceil(rw/1.1)+1);endc+=4;midc+=2*(c-1)}}}
+    else flat+=sr.lay.n;
+  }
+  if(rail>0){bom.push(['Montageschiene Aluminium',`Schrägdach, ca. ${fmt(rail,1)} m`,Math.ceil(rail/4.4),'Stk à 4,4 m']);bom.push(['Dachhaken / Stockschrauben','Sparrenabstand ≈ 1,1 m angenommen',hooks,'Stk']);bom.push(['Modulklemmen','End- / Mittelklemmen',`${endc} / ${midc}`,'Stk'])}
+  if(flat>0){bom.push(['Flachdach-Aufständerung','inkl. Bautenschutzmatten',flat,'Modulplätze']);bom.push(['Ballast','nach Windsog-Gutachten (DIN EN 1991-1-4)','lt. Gutachten',''])}
+  bom.push(['DC-Solarleitung H1Z2Z2-K',`${P.dcCs} mm², rot/schwarz`,Math.ceil(D.strings.length*2*P.dcLen*1.1),'m']);
+  bom.push(['Steckverbinder MC4-kompatibel','herstellergleich zum Modul',D.strings.length*2,'Paare']);
+  bom.push(['DC-Überspannungsschutz Typ 2','je MPP-Tracker, ggf. im WR integriert',D.units.reduce((a,u)=>a+u.mppts.length,0),'Pole-Satz']);
+  D.units.forEach((u,j)=>{const a=acSizing(u);bom.push([`AC-Leitung WR ${j+1}`,`${a.type} ${a.cores}×${fmt(a.cs,1)} mm² (I = ${fmt(a.I,1)} A)`,'ca. 15','m']);bom.push([`Leitungsschutz WR ${j+1}`,`LS B${a.LS} ${u.t.ph===1?'1':'3'}-polig, RCD lt. Hersteller`,1,'Stk'])});
+  bom.push(['AC-Überspannungsschutz','Typ 1+2 Kombiableiter',1,'Stk']);
+  bom.push(['Zählerplatz',M.kWp>7?'VDE-AR-N 4100, Platz für iMSys + Steuerbox':'VDE-AR-N 4100, Zweirichtungszähler',1,'Stk']);
+  if(M.pacN>30)bom.push(['NA-Schutz zentral','VDE-AR-N 4105, mit Kuppelschalter',1,'Stk']);
+  if(P.evOn)bom.push(['Wallbox',`${fmt(P.evPow,1)} kW, steuerbar nach § 14a EnWG`,1,'Stk']);
+  bom.push(['Potentialausgleich','PA-Leitung 6 mm² (16 mm² bei Blitzschutzanlage)',1,'Satz']);
+  document.getElementById('bomTable').innerHTML=`<thead><tr><th class="n">Pos.</th><th>Bezeichnung</th><th>Spezifikation</th><th class="n">Menge</th><th>Einheit</th></tr></thead><tbody>${bom.map((b,i)=>`<tr><td class="n">${i+1}</td><td>${b[0]}</td><td>${b[1]}</td><td class="n">${typeof b[2]==='number'?fmt(b[2]):b[2]}</td><td>${b[3]}</td></tr>`).join('')}</tbody>`;
+}
+
+/* ---------- Ertrag ---------- */
+function renderYield(){
+  const y=R.first,mo=y.mo,c=C();
+  chart('chMonthly',{type:'bar',data:{labels:MNAMES,datasets:[
+    {label:'Direktverbrauch',data:[...mo.dir],backgroundColor:c.dir,stack:'pv'},
+    {label:'In Speicher',data:[...mo.bin],backgroundColor:c.bat,stack:'pv'},
+    {label:'Einspeisung',data:[...mo.feed],backgroundColor:c.feed,stack:'pv'},
+    {label:'Abregelung',data:[...mo.curt],backgroundColor:c.curt,stack:'pv'},
+    {label:'Verbrauch',data:[...mo.load],type:'line',borderColor:c.ink,backgroundColor:c.ink,borderWidth:2,pointRadius:3,stack:'l'}]},
+    options:baseOpts({scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'kWh',color:c.muted}}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${fmt(t.raw)} kWh`}}}})});
+  const L=M.Ls,kWp=M.kWp||1,ghiE=M.W.ghiSum*kWp,poa=L.poa||1;
+  const steps=[];let cur=poa;
+  const add=(lab,loss)=>{steps.push({lab,loss});cur-=loss};
+  add('Horizont & Reihenverschattung',L.hor);add('Reflexion (Einfallswinkel, IAM)',L.iam);add('Verschmutzung',L.soil);add('Teilverschattung Nahbereich',L.near);
+  add('Schwachlichtverhalten',L.ll);add('Modultemperatur',L.temp);add('Mismatch & Toleranzen',L.mm);add('DC-Leitungen',L.dc);
+  add('Anfangsdegradation (Jahr 1)',y.degLoss);add('Wechselrichter-Wirkungsgrad',y.invLoss);add('Clipping (WR-Nennleistung)',y.clipLoss);add('AC-Leitung & Sonstiges',y.acLoss);
+  const prE=cur;add('Abregelung Einspeisegrenze',y.curt);
+  let h=`<thead><tr><th>Position</th><th class="n">kWh</th><th class="n">%</th><th></th></tr></thead><tbody>`;
+  h+=`<tr class="lvl"><td>Globalstrahlung horizontal × kWp</td><td class="n">${fmt(ghiE)}</td><td class="n">${fmt(M.W.ghiSum)} kWh/m²</td><td class="bar"><div class="bb" style="width:${Math.min(100,ghiE/poa*100)}%"></div></td></tr>`;
+  h+=`<tr class="lvl"><td>Einstrahlung Modulebene (Transposition)</td><td class="n">${fmt(poa)}</td><td class="n">${poa>=ghiE?'+':''}${fmt((poa/ghiE-1)*100,1)} %</td><td class="bar"><div class="bb gain" style="width:100%"></div></td></tr>`;
+  for(const s of steps){const p=s.loss/poa*100;h+=`<tr><td>${s.lab}</td><td class="n">−${fmt(Math.abs(s.loss))}</td><td class="n">−${fmt(Math.abs(p),2)}</td><td class="bar"><div class="bb loss" style="width:${Math.min(100,Math.abs(p)*4)}%"></div></td></tr>`}
+  h+=`<tr class="lvl"><td>AC-Ertrag vor Abregelung (PR ${fmt(prE/poa*100,1)} %)</td><td class="n">${fmt(prE)}</td><td class="n">${fmt(prE/kWp)} kWh/kWp</td><td class="bar"><div class="bb" style="width:${prE/poa*100}%"></div></td></tr>`;
+  h+=`<tr class="lvl"><td>Nutzbarer AC-Ertrag</td><td class="n">${fmt(y.pv-y.curt)}</td><td class="n">${fmt((y.pv-y.curt)/kWp)} kWh/kWp</td><td class="bar"><div class="bb" style="width:${(y.pv-y.curt)/poa*100}%"></div></td></tr></tbody>`;
+  document.getElementById('casc').innerHTML=h;
+  const H=y.H,arr=Array.from(H.pv).sort((a,b)=>b-a),pts=[];
+  for(let i=0;i<8760;i+=12)pts.push({x:i,y:arr[i]});
+  chart('chDuration',{type:'line',data:{datasets:[
+    {label:'AC-Leistung PV',data:pts,borderColor:c.feed,backgroundColor:c.feed+'33',fill:true,pointRadius:0,borderWidth:2},
+    {label:'WR-Nennleistung',data:[{x:0,y:M.pacN},{x:8760,y:M.pacN}],borderColor:c.muted,borderDash:[6,4],pointRadius:0,borderWidth:1.5},
+    {label:'Einspeisegrenze',data:[{x:0,y:M.flimKW},{x:8760,y:M.flimKW}],borderColor:c.curt,borderDash:[3,3],pointRadius:0,borderWidth:1.5}]},
+    options:baseOpts({interaction:{mode:'nearest',intersect:false},scales:{x:{type:'linear',min:0,max:5000,title:{display:true,text:'Stunden im Jahr',color:c.muted}},y:{title:{display:true,text:'kW',color:c.muted},beginAtZero:true}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${fmt(t.parsed.y,2)} kW`}}}})});
+  let t=`<thead><tr><th>Monat</th><th class="n">PV AC brutto kWh</th><th class="n">kWh/kWp</th><th class="n">Verbrauch</th><th class="n">Direkt</th><th class="n">Speicher aus</th><th class="n">Einspeisung</th><th class="n">Abregelung</th><th class="n">Netzbezug</th><th class="n">Autarkie</th></tr></thead><tbody>`;
+  for(let m=0;m<12;m++)t+=`<tr><td>${MNAMES[m]}</td><td class="n">${fmt(mo.pv[m])}</td><td class="n">${fmt(mo.pv[m]/kWp,1)}</td><td class="n">${fmt(mo.load[m])}</td><td class="n">${fmt(mo.dir[m])}</td><td class="n">${fmt(mo.bout[m])}</td><td class="n">${fmt(mo.feed[m])}</td><td class="n">${fmt(mo.curt[m])}</td><td class="n">${fmt(mo.grid[m])}</td><td class="n">${fmt((1-mo.grid[m]/mo.load[m])*100,1)} %</td></tr>`;
+  t+=`<tr class="sum"><td>Jahr</td><td class="n">${fmt(y.pv)}</td><td class="n">${fmt(y.pv/kWp)}</td><td class="n">${fmt(y.load)}</td><td class="n">${fmt(y.dir)}</td><td class="n">${fmt(y.bout)}</td><td class="n">${fmt(y.feed)}</td><td class="n">${fmt(y.curt)}</td><td class="n">${fmt(y.grid)}</td><td class="n">${fmt(y.aut*100,1)} %</td></tr></tbody>`;
+  document.getElementById('monthTable').innerHTML=t;
+}
+
+/* ---------- Eigenverbrauch & Speicher ---------- */
+let weekStart=175;try{const w=+localStorage.getItem(LSKEY+'.week');if(w>=0&&w<=358)weekStart=w}catch(e){}
+document.getElementById('weekStart').value=weekStart;
+document.getElementById('weekStart').addEventListener('input',(e)=>{weekStart=+e.target.value;drawWeek()});
+document.querySelectorAll('[data-week]').forEach(b=>b.addEventListener('click',()=>{weekStart=+b.dataset.week;document.getElementById('weekStart').value=weekStart;drawWeek()}));
+function dateLabel(d){const dt=new Date(Date.UTC(2027,0,1+d));return dt.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',timeZone:'UTC'})}
+function drawWeek(){
+  if(!R)return;try{localStorage.setItem(LSKEY+'.week',weekStart)}catch(e){}
+  const H=R.first.H,c=C(),i0=weekStart*24,labels=[],pv=[],ld=[],gr=[],fd=[],soc=[];
+  for(let i=i0;i<i0+168;i++){const d=Math.floor(i/24),h=i%24;labels.push(h===0?dateLabel(d):`${h}:00`);pv.push(H.pv[i]);ld.push(H.load[i]);gr.push(H.grid[i]);fd.push(H.feed[i]);soc.push(H.soc[i]*100)}
+  document.getElementById('weekLabel').textContent=`${dateLabel(weekStart)} – ${dateLabel(weekStart+6)} (Uhrzeit MEZ)`;
+  const ds=[
+    {label:'PV-Erzeugung',data:pv,borderColor:c.feed,backgroundColor:c.feed+'40',fill:true,pointRadius:0,borderWidth:1.5,yAxisID:'y'},
+    {label:'Verbrauch',data:ld,borderColor:c.ink,pointRadius:0,borderWidth:1.5,yAxisID:'y'},
+    {label:'Netzbezug',data:gr,borderColor:c.grid,borderDash:[4,3],pointRadius:0,borderWidth:1.2,yAxisID:'y'},
+    {label:'Einspeisung',data:fd,borderColor:c.dir,pointRadius:0,borderWidth:1.2,yAxisID:'y'}];
+  if(R.first.cap>0)ds.push({label:'Ladezustand Speicher',data:soc,borderColor:c.bat,backgroundColor:c.bat+'22',fill:true,pointRadius:0,borderWidth:1.5,yAxisID:'y2'});
+  chart('chWeek',{type:'line',data:{labels,datasets:ds},options:baseOpts({scales:{x:{ticks:{autoSkip:false,maxRotation:0,callback:function(v,i){return i%24===0?labels[i]:null}}},y:{beginAtZero:true,title:{display:true,text:'kW (Stundenmittel)',color:c.muted}},y2:{display:R.first.cap>0,position:'right',min:0,max:100,grid:{drawOnChartArea:false},ticks:{color:c.muted,callback:v=>v+' %'}}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${fmt(t.raw,t.dataset.yAxisID==='y2'?0:2)} ${t.dataset.yAxisID==='y2'?'%':'kW'}`}}}})});
+}
+function renderSelf(){
+  drawWeek();
+  const y=R.first,mo=y.mo,c=C();
+  chart('chCover',{type:'bar',data:{labels:MNAMES,datasets:[
+    {label:'PV direkt',data:[...mo.dir],backgroundColor:c.dir},{label:'Aus Speicher',data:[...mo.bout],backgroundColor:c.bat},{label:'Netzbezug',data:[...mo.grid],backgroundColor:c.grid}]},
+    options:baseOpts({scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'kWh',color:c.muted}}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${fmt(t.raw)} kWh`}}}})});
+  const st=(k,v)=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  if(y.cap>0){
+    const cyc=y.bin/y.cap,eta=y.bin>0?y.bout/y.bin:0;
+    document.getElementById('batStats').innerHTML=[st('Nutzbare Kapazität J1',fmt(y.cap,1)+' kWh'),st('Geladen',fmt(y.bin)+' kWh/a'),st('Entladen',fmt(y.bout)+' kWh/a'),st('Vollzyklen',fmt(cyc)+' /a'),st('Wirkungsgrad real',fmt(eta*100,1)+' %'),st('Standby-Verlust',fmt(y.stby)+' kWh/a'),st('Anteil an Deckung',fmt(y.bout/y.load*100,1)+' %'),st('Kosten je entladener kWh',R.batKWh!=null?fmt(R.batKWh*100,1)+' ct':'–')].join('');
+    document.getElementById('batNote').textContent=`Zyklen über ${P.batLife} Jahre ≈ ${fmt(cyc*P.batLife)} (LFP typ. 6.000+). Ein Speicher lohnt sich, solange seine Kosten je kWh unter der Differenz aus Strompreis (${fmt(P.price,1)} ct) und Einspeisevergütung (${fmt(R.tariff*100,1)} ct) liegen.`;
+  } else {document.getElementById('batStats').innerHTML=st('Speicher','nicht eingerechnet')+(REC.bat.cap?st('Empfohlene Größe',`${fmt(REC.bat.cap,1)} kWh / ${fmt(REC.bat.pow,1)} kW`):'');document.getElementById('batNote').textContent='Der Vergleich unten zeigt, wie sich verschiedene Speichergrößen auswirken würden. Einrechnen über „Batteriespeicher“ oder die Schaltfläche in der Übersicht.'}
+  if(!STUDY){document.getElementById('batStudy').innerHTML='<tbody><tr><td>Berechnung läuft …</td></tr></tbody>';return}
+  const B=STUDY.bat;if(!B.length){document.getElementById('batStudy').innerHTML='<tbody><tr><td>Bei Volleinspeisung nicht relevant.</td></tr></tbody>';return}
+  const cur=P.batOn&&P.feedMode!=='voll'?P.batCap:0;
+  chart('chBatStudy',{type:'bar',data:{labels:B.map(b=>b.c?fmt(b.c,1)+' kWh':'ohne'),datasets:[
+    {label:'Kapitalwert',data:B.map(b=>b.npv),backgroundColor:B.map(b=>b.npv>=0?c.good+'cc':c.bad+'cc'),yAxisID:'y',order:2},
+    {label:'Autarkiegrad',data:B.map(b=>b.aut*100),type:'line',borderColor:c.bat,backgroundColor:c.bat,yAxisID:'y2',order:1},
+    {label:'Eigenverbrauchsquote',data:B.map(b=>b.evq*100),type:'line',borderColor:c.dir,backgroundColor:c.dir,yAxisID:'y2',order:1}]},
+    options:baseOpts({scales:{y:{title:{display:true,text:'Kapitalwert €',color:c.muted}},y2:{position:'right',min:0,max:100,grid:{drawOnChartArea:false},ticks:{color:c.muted,callback:v=>v+' %'}}},plugins:{tooltip:{callbacks:{label:(t)=>t.dataset.yAxisID==='y2'?`${t.dataset.label}: ${fmt(t.raw,1)} %`:`${t.dataset.label}: ${eur(t.raw)}`}}}})});
+  document.getElementById('batStudy').innerHTML=`<thead><tr><th class="n">Speicher</th><th class="n">Leistung</th><th class="n">EV-Quote</th><th class="n">Autarkie</th><th class="n">Zyklen/a</th><th class="n">Investition</th><th class="n">Kapitalwert</th><th class="n">IZF</th><th></th></tr></thead><tbody>${B.map(b=>`<tr class="${Math.abs(b.c-cur)<1e-9?'hl':''}"><td class="n">${b.c?fmt(b.c,1)+' kWh':'ohne'}</td><td class="n">${b.c?fmt(b.pw,1)+' kW':'–'}</td><td class="n">${fmt(b.evq*100,1)} %</td><td class="n">${fmt(b.aut*100,1)} %</td><td class="n">${b.c?fmt(b.cyc):'–'}</td><td class="n">${eur(b.I)}</td><td class="n">${eur(b.npv)}</td><td class="n">${b.irr!=null?fmt(b.irr*100,1)+' %':'–'}</td><td>${[b===STUDY.best?'wirtschaftl. Optimum':'',b.c===REC.bat.cap&&b.c>0?'technische Empfehlung':''].filter(Boolean).join(', ')}</td></tr>`).join('')}</tbody>`;
+}
+
+/* ---------- Wirtschaftlichkeit ---------- */
+function renderEcon(){
+  const c=C(),rows=R.rows;
+  const k=(l,v,u,s,cls='')=>`<div class="kpi ${cls}"><span class="k">${l}${KTIP[l]?ti(KTIP[l]):''}</span><span class="v">${v}${u?`<small>${u}</small>`:''}</span><span class="s">${s||'&nbsp;'}</span></div>`;
+  const sumCF=rows.reduce((a,r)=>a+r.cf,0);
+  document.getElementById('econKpis').innerHTML=[
+    k('Investition',fmt(R.I),'€',R.loan>0?`davon Kredit ${eur(R.loan)}`:'Eigenkapital'),
+    k('Kapitalwert',fmt(R.npv),'€',`Kalkulationszins ${fmt(P.discount,2)} %`,R.npv>=0?'pos':'neg'),
+    k('Interner Zinsfuß',R.irr!=null?fmt(R.irr*100,1):'–','%','',R.irr!=null&&R.irr*100>=P.discount?'pos':'neg'),
+    k('Amortisation',R.amort!=null?fmt(R.amort,1):'–','J',R.amortD!=null?`dynamisch ${fmt(R.amortD,1)} J`:'dynamisch nicht erreicht'),
+    k('Überschuss nominal',fmt(sumCF-(R.I-R.loan)),'€',`nach ${P.years} Jahren`),
+    k('Stromgestehungskosten',fmt(R.lcoe*100,1),'ct/kWh',R.inv.bat>0?'gesamt inkl. Speicher':'abgezinst'),
+    k('LCOE nur PV',fmt(R.lcoePV*100,1),'ct/kWh','ohne Speicher'),
+    k('Ersparnis Jahr 1',fmt(rows[0].save+rows[0].rev-rows[0].opex),'€',`Eigenverbrauch ${eur(rows[0].save)}`)].join('');
+  const labels=['0',...rows.map(r=>String(r.y))];
+  chart('chCash',{type:'bar',data:{labels,datasets:[
+    {label:'Cashflow des Jahres',data:[-(R.I-R.loan),...rows.map(r=>r.cf)],backgroundColor:[c.bad+'aa',...rows.map(r=>r.cf>=0?c.dir+'99':c.bad+'aa')],order:3},
+    {label:'Kumuliert nominal',data:[-(R.I-R.loan),...rows.map(r=>r.cum)],type:'line',borderColor:c.feed,backgroundColor:c.feed,borderWidth:2.5,pointRadius:2,order:1},
+    {label:'Kumuliert abgezinst',data:[-(R.I-R.loan),...rows.map(r=>r.cumD)],type:'line',borderColor:c.ink,borderDash:[5,4],borderWidth:1.5,pointRadius:0,order:2}]},
+    options:baseOpts({scales:{x:{title:{display:true,text:'Betriebsjahr',color:c.muted}},y:{title:{display:true,text:'€',color:c.muted}}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${eur(t.raw)}`}}}})});
+  const inv=R.inv,tot=inv.total;
+  document.getElementById('invTable').innerHTML=`<thead><tr><th>Position</th><th class="n">€</th><th class="n">Anteil</th></tr></thead><tbody>${inv.items.map(([l,v])=>`<tr><td>${l}</td><td class="n">${eur(v)}</td><td class="n">${fmt(v/tot*100,1)} %</td></tr>`).join('')}<tr class="sum"><td>Summe${P.vat>0?` (inkl. ${P.vat} % USt.)`:' (USt. 0 %)'}</td><td class="n">${eur(tot)}</td><td class="n">${M.kWp?fmt(tot/M.kWp)+' €/kWp':''}</td></tr></tbody>`;
+  let t=`<thead><tr><th class="n">Jahr</th><th class="n">PV kWh</th><th class="n">Eigenverbr.</th><th class="n">Einspeis.</th><th class="n">Strompreis ct</th><th class="n">Ersparnis €</th><th class="n">Erlös €</th><th class="n">Betrieb €</th><th class="n">Ersatz €</th><th class="n">Kredit €</th><th class="n">Cashflow €</th><th class="n">Kumuliert €</th></tr></thead><tbody>`;
+  t+=`<tr><td class="n">0</td><td colspan="9">Investition (Eigenanteil)</td><td class="n">${eur(-(R.I-R.loan))}</td><td class="n">${eur(-(R.I-R.loan))}</td></tr>`;
+  for(const r of rows)t+=`<tr><td class="n">${r.y}</td><td class="n">${fmt(r.pv)}</td><td class="n">${fmt(r.self)}</td><td class="n">${fmt(r.feed)}</td><td class="n">${fmt(r.price*100,1)}</td><td class="n">${fmt(r.save)}</td><td class="n">${fmt(r.rev)}</td><td class="n">${fmt(-r.opex)}</td><td class="n">${r.repl?fmt(-r.repl):'–'}</td><td class="n">${r.debt?fmt(-r.debt):'–'}</td><td class="n">${fmt(r.cf)}</td><td class="n">${fmt(r.cum)}</td></tr>`;
+  document.getElementById('yearTable').innerHTML=t+'</tbody>';
+  if(STUDY&&STUDY.size.length){
+    const S=STUDY.size;
+    chart('chSize',{type:'bar',data:{labels:S.map(s=>fmt(s.kWp,1)+' kWp'),datasets:[
+      {label:'Kapitalwert',data:S.map(s=>s.npv),backgroundColor:S.map(s=>s.npv>=0?c.good+'cc':c.bad+'cc'),yAxisID:'y',order:2},
+      {label:'Eigenverbrauchsquote',data:S.map(s=>s.evq*100),type:'line',borderColor:c.dir,backgroundColor:c.dir,yAxisID:'y2',order:1},
+      {label:'Autarkiegrad',data:S.map(s=>s.aut*100),type:'line',borderColor:c.bat,backgroundColor:c.bat,yAxisID:'y2',order:1}]},
+      options:baseOpts({scales:{y:{title:{display:true,text:'Kapitalwert €',color:c.muted}},y2:{position:'right',min:0,max:100,grid:{drawOnChartArea:false},ticks:{color:c.muted,callback:v=>v+' %'}}},plugins:{tooltip:{callbacks:{label:(t)=>t.dataset.yAxisID==='y2'?`${t.dataset.label}: ${fmt(t.raw,1)} %`:`${t.dataset.label}: ${eur(t.raw)}`}}}})});
+  }
+}
+
+/* ---------- Ausrichtung & Neigung ---------- */
+const FAN_AZ=[],FAN_TI=[];for(let a=-180;a<=180;a+=10)FAN_AZ.push(a);for(let t=0;t<=90;t+=5)FAN_TI.push(t);
+function fanKey(){return [P.lat,P.lon,P.ghi,P.tmean,P.seed,P.albedo,P.hN,P.hNO,P.hO,P.hSO,P.hS,P.hSW,P.hW,P.hNW].join('|')}
+function poaEff(tilt,az,monthly){
+  let s=0;const mo=monthly?new Float64Array(12):null;
+  orient(M.W,tilt,az,P.albedo,M.hor,null,(i,g0,g1,g2)=>{s+=g2;if(mo)mo[DAY_MONTH[(i/24)|0]]+=g2});
+  return monthly?{s,mo}:s;
+}
+let FANKEY=null;
+function computeFan(){
+  const k=fanKey();if(FAN&&FANKEY===k)return FAN;
+  const grid=FAN_TI.map(t=>FAN_AZ.map(a=>t===0?null:poaEff(t,a)));
+  const flat=poaEff(0,0);for(let j=0;j<FAN_AZ.length;j++)grid[0][j]=flat;
+  let mx=0,opt=null;grid.forEach((row,ti)=>row.forEach((v,ai)=>{if(v>mx){mx=v;opt={t:FAN_TI[ti],a:FAN_AZ[ai]}}}));
+  for(let t=Math.max(0,opt.t-5);t<=opt.t+5;t++)for(let a=opt.a-10;a<=opt.a+10;a+=2){const v=poaEff(t,a);if(v>mx){mx=v;opt={t,a}}}
+  FAN={grid,mx,opt};FANKEY=k;return FAN;
+}
+function fanVal(t,a){
+  const F=FAN,ti=clamp(t/5,0,18),i0=Math.min(17,Math.floor(ti)),ft=ti-i0;
+  const ai=clamp((a+180)/10,0,36),j0=Math.min(35,Math.floor(ai)),fa=ai-j0;
+  const g=F.grid;const v=(g[i0][j0]*(1-fa)+g[i0][j0+1]*fa)*(1-ft)+(g[i0+1][j0]*(1-fa)+g[i0+1][j0+1]*fa)*ft;
+  return v/F.mx;
+}
+const BANDS=[[0.95,'--b8','≥ 95 %'],[0.90,'--b7','90–95'],[0.85,'--b6','85–90'],[0.80,'--b5','80–85'],[0.75,'--b4','75–80'],[0.70,'--b3','70–75'],[0.60,'--b2','60–70'],[0.50,'--b1','50–60'],[-1,'--b0','< 50 %']];
+function hexRGB(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');const n=parseInt(h,16);return [(n>>16)&255,(n>>8)&255,n&255]}
+function azFromXY(x,y){const comp=Math.atan2(x,-y)/DEG;let a=comp-180;if(a<-180)a+=360;return a}
+function drawFan(){
+  const F=computeFan(),cv=document.getElementById('fan'),box=document.getElementById('fanBox');
+  const size=Math.max(260,Math.round(box.clientWidth||520)),dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=size*dpr;cv.height=size*dpr;const ctx=cv.getContext('2d');
+  const cx=size/2,cy=size/2,R0=size/2-30;
+  const cols=BANDS.map(b=>hexRGB(tok(b[1])));
+  const W2=size*dpr,img=ctx.createImageData(W2,W2),d=img.data;
+  for(let py=0;py<W2;py++)for(let px=0;px<W2;px++){
+    const x=px/dpr-cx,y=py/dpr-cy,r=Math.hypot(x,y);if(r>R0)continue;
+    const v=fanVal(r/R0*90,azFromXY(x,y));let k=0;while(v<BANDS[k][0])k++;const c=cols[k];const o=(py*W2+px)*4;d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=255;
+  }
+  ctx.putImageData(img,0,0);ctx.setTransform(dpr,0,0,dpr,0,0);
+  const ink=tok('--ink'),ff=getComputedStyle(document.body).fontFamily;
+  ctx.strokeStyle=ink+'55';ctx.lineWidth=0.8;ctx.fillStyle=ink;
+  for(const t of [15,30,45,60,75,90]){ctx.beginPath();ctx.arc(cx,cy,t/90*R0,0,2*Math.PI);ctx.stroke()}
+  for(let a=0;a<360;a+=45){const r=a*DEG;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.sin(r)*R0,cy-Math.cos(r)*R0);ctx.stroke()}
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='600 13px '+ff;
+  for(const [l,a] of [['N',0],['NO',45],['O',90],['SO',135],['S',180],['SW',225],['W',270],['NW',315]]){const r=a*DEG;ctx.fillText(l,cx+Math.sin(r)*(R0+16),cy-Math.cos(r)*(R0+16))}
+  ctx.font='10.5px '+ff;
+  for(const t of [30,60,90])ctx.fillText(t+'°',cx+4+t/90*R0*Math.sin(200*DEG),cy-t/90*R0*Math.cos(200*DEG));
+  const pos=(t,a)=>{const r=t/90*R0,ang=(a+180)*DEG;return [cx+Math.sin(ang)*r,cy-Math.cos(ang)*r]};
+  const [ox,oy]=pos(F.opt.t,F.opt.a);ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(ox-6,oy);ctx.lineTo(ox+6,oy);ctx.moveTo(ox,oy-6);ctx.lineTo(ox,oy+6);ctx.stroke();
+  ctx.font='600 11px '+ff;ctx.textAlign='left';
+  for(const g of M.groups){const [x,y]=pos(g.tilt,g.az);ctx.fillStyle=tok('--cell');ctx.strokeStyle=tok('--panel');ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,6,0,2*Math.PI);ctx.fill();ctx.stroke();ctx.fillStyle=ink;ctx.fillText(g.name,x+9,y-8)}
+  if(fanSel){const [x,y]=pos(fanSel.t,fanSel.a);ctx.strokeStyle=tok('--sun');ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(x,y,8,0,2*Math.PI);ctx.stroke()}
+  cv._geo={cx,cy,R0,size};
+  document.getElementById('fanLeg').innerHTML=BANDS.map(b=>`<span><i style="background:var(${b[1]})"></i>${b[2]}</span>`).join('')+`<span>✛ Optimum ${fmt(F.opt.t)}° / ${azName(F.opt.a)} (${fmt(F.opt.a)}°)</span>`;
+}
+function specFactor(){const y=R.first;let poaE=0;for(const g of M.groups)poaE+=poaEff(g.tilt,g.az)*g.kWp;return poaE>0?y.pv/poaE:0.85}
+function fanPick(ev,click){
+  const cv=document.getElementById('fan'),g=cv._geo;if(!g)return;const rc=cv.getBoundingClientRect();
+  const sc=rc.width/g.size,xx=(ev.clientX-rc.left)/sc-g.cx,yy=(ev.clientY-rc.top)/sc-g.cy,r=Math.hypot(xx,yy);
+  const tip=document.getElementById('fanTip');
+  if(r>g.R0){tip.hidden=true;return}
+  const t=Math.round(r/g.R0*90),a=Math.round(azFromXY(xx,yy)),v=fanVal(t,a);
+  tip.hidden=false;tip.textContent=`${t}° · ${azName(a)} (${a}°) · ${fmt(v*100,1)} %`;
+  tip.style.left=Math.min(rc.width-170,ev.clientX-rc.left+12)+'px';tip.style.top=(ev.clientY-rc.top+12)+'px';
+  if(click){fanSel={t,a};drawFan();fanDetail()}
+}
+document.getElementById('fan').addEventListener('mousemove',e=>fanPick(e,false));
+document.getElementById('fan').addEventListener('mouseleave',()=>{document.getElementById('fanTip').hidden=true});
+document.getElementById('fan').addEventListener('click',e=>fanPick(e,true));
+function fanDetail(){
+  const F=FAN,sf=specFactor(),c=C(),g0=M.groups[0];
+  const sel=fanSel||{t:g0?g0.tilt:35,a:g0?g0.az:0};
+  const a=poaEff(sel.t,sel.a,true),o=poaEff(F.opt.t,F.opt.a,true),h=poaEff(0,0,true);
+  document.getElementById('fanSel').innerHTML=`<span>Gewählt</span><b>${sel.t}° Neigung · ${azName(sel.a)} (${sel.a}°)</b><span>Einstrahlung</span><b>${fmt(a.s)} kWh/m²a · ${fmt(a.s/F.mx*100,1)} % vom Optimum</b><span>Ertrag ca.</span><b>${fmt(a.s*sf)} kWh/kWp (bei PR dieser Anlage)</b><span>Optimum</span><b>${fmt(F.opt.t)}° · ${azName(F.opt.a)} → ${fmt(F.mx)} kWh/m²a</b>`;
+  chart('chFanMonth',{type:'bar',data:{labels:MNAMES,datasets:[{label:'Gewählt',data:[...a.mo],backgroundColor:c.feed},{label:'Optimum',data:[...o.mo],backgroundColor:c.dir},{label:'Horizontal',data:[...h.mo],backgroundColor:c.grid}]},options:baseOpts({scales:{y:{title:{display:true,text:'kWh/m²',color:c.muted}}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${fmt(t.raw,1)} kWh/m²`}}}})});
+}
+function renderOrient(){
+  document.getElementById('fanSel').textContent='Berechne Einstrahlungsfächer …';
+  setTimeout(()=>{
+    drawFan();fanDetail();
+    const c=C();
+    const series=[['Süd',[0]],['SO / SW',[-45,45]],['Ost / West',[-90,90]],['NO / NW',[-135,135]],['Nord',[180]]];
+    const cols=[c.feed,c.dir,c.bat,c.grid,c.curt];
+    chart('chTilt',{type:'line',data:{labels:FAN_TI.map(t=>t+'°'),datasets:series.map(([l,az],k)=>({label:l,data:FAN_TI.map(t=>az.reduce((s,a)=>s+fanVal(t,a),0)/az.length*100),borderColor:cols[k],backgroundColor:cols[k],pointRadius:2,borderWidth:2}))},
+      options:baseOpts({scales:{x:{title:{display:true,text:'Modulneigung',color:c.muted}},y:{min:30,max:101,title:{display:true,text:'% vom Optimum',color:c.muted}}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${fmt(t.raw,1)} %`}}}})});
+    const tilts=[10,20,30,45,60,90],tc=[c.feed,c.dir,c.bat,c.grid,c.curt,c.ink];
+    chart('chAz',{type:'line',data:{labels:FAN_AZ.map(a=>azName(a)+' '+a+'°'),datasets:tilts.map((t,k)=>({label:t+'° Neigung',data:FAN_AZ.map(a=>fanVal(t,a)*100),borderColor:tc[k],backgroundColor:tc[k],pointRadius:0,borderWidth:2}))},
+      options:baseOpts({scales:{x:{ticks:{autoSkip:true,maxTicksLimit:9}},y:{min:20,max:101,title:{display:true,text:'% vom Optimum',color:c.muted}}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${fmt(t.raw,1)} %`}}}})});
+  },20);
+}
+window.addEventListener('resize',()=>{if(activeTab==='orient'&&FAN)drawFan()});
+
+/* ---------- Sensitivität ---------- */
+function renderSens(){
+  if(!STUDY){document.getElementById('sensTable').innerHTML='<tbody><tr><td>Berechnung läuft …</td></tr></tbody>';return}
+  const c=C(),S=STUDY.sens.slice().sort((a,b)=>Math.abs(b.hi-b.lo)-Math.abs(a.hi-a.lo)),base=R.npv;
+  chart('chTornado',{type:'bar',data:{labels:S.map(s=>s.l),datasets:[
+    {label:'ungünstig',data:S.map(s=>[base,Math.min(s.lo,s.hi)]),backgroundColor:c.bad+'cc'},
+    {label:'günstig',data:S.map(s=>[base,Math.max(s.lo,s.hi)]),backgroundColor:c.good+'cc'}]},
+    options:baseOpts({indexAxis:'y',interaction:{mode:'nearest',intersect:true},scales:{x:{title:{display:true,text:`Kapitalwert € (Basis ${eur(base)})`,color:c.muted}},y:{stacked:true}},plugins:{tooltip:{callbacks:{label:(t)=>`${t.dataset.label}: ${eur(t.raw[1])}`}}}})});
+  document.getElementById('sensTable').innerHTML=`<thead><tr><th>Parameter</th><th class="n">Kapitalwert −</th><th class="n">Kapitalwert +</th><th class="n">Spanne</th></tr></thead><tbody>${STUDY.sens.map(s=>`<tr><td>${s.l}</td><td class="n">${eur(s.lo)}</td><td class="n">${eur(s.hi)}</td><td class="n">${eur(Math.abs(s.hi-s.lo))}</td></tr>`).join('')}</tbody>`;
+  const be=[];
+  if(STUDY.beP!=null)be.push(['Strompreis, ab dem sich die Anlage rechnet',STUDY.beP>0?fmt(P.price*STUDY.beP,1)+' ct/kWh':'bei jedem Preis',`aktuell ${fmt(P.price,1)} ct/kWh`]);
+  if(STUDY.beI!=null)be.push(['Maximal vertretbare Investition',STUDY.beI>0?eur(R.I*STUDY.beI):'–',`aktuell ${eur(R.I)}`]);
+  if(STUDY.beI!=null&&M.kWp)be.push(['… entspricht',STUDY.beI>0?fmt(R.I*STUDY.beI/M.kWp)+' €/kWp':'–',`aktuell ${fmt(R.I/M.kWp)} €/kWp`]);
+  runWx();
+  document.getElementById('beTable').innerHTML=`<thead><tr><th>Grenzwert</th><th class="n">Wert</th><th class="n">Vergleich</th></tr></thead><tbody>${be.map(r=>`<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td></tr>`).join('')}</tbody>`;
+}
+
+let WX=null;
+function runWx(){
+  const key=JSON.stringify({...P,seed:0});
+  if(WX&&WX.key===key){drawWx();return}
+  WX={key,rows:[],done:false};const my=WX;drawWx();
+  const seeds=[1,2,3,4,5,6,7,8,9,10];let i=0;
+  const step=()=>{if(WX!==my)return;const sd=seeds[i++];const Q={...P,seed:sd};const Mq=buildModel(Q),e=econ(Mq,Q,{});
+    my.rows.push({sd,spec:(e.first.pv-e.first.curt)/Math.max(Mq.kWp,1e-9),evq:e.first.evq,aut:e.first.aut,curt:e.first.curt,npv:e.npv,bout:e.first.bout});
+    if(i<seeds.length)setTimeout(step,0);else my.done=true;if(activeTab==='sens')drawWx()};
+  setTimeout(step,30);
+}
+function drawWx(){
+  const el=document.getElementById('wxTable');if(!el||!WX)return;const r=WX.rows;
+  if(!r.length){el.innerHTML='<tbody><tr><td>Berechne 10 Wetterjahre …</td></tr></tbody>';return}
+  const st=(f,d,u)=>{const v=r.map(f),mn=Math.min(...v),mx=Math.max(...v),av=v.reduce((a,b)=>a+b,0)/v.length;return `<td class="n">${fmt(mn,d)}${u}</td><td class="n">${fmt(av,d)}${u}</td><td class="n">${fmt(mx,d)}${u}</td>`};
+  const bat=P.batOn&&P.feedMode!=='voll';
+  el.innerHTML=`<thead><tr><th>Kennzahl</th><th class="n">Minimum</th><th class="n">Mittel</th><th class="n">Maximum</th></tr></thead><tbody>
+   <tr><td>Spezifischer Ertrag</td>${st(x=>x.spec,0,' kWh/kWp')}</tr>
+   <tr><td>Eigenverbrauchsquote</td>${st(x=>x.evq*100,1,' %')}</tr>
+   <tr><td>Autarkiegrad</td>${st(x=>x.aut*100,1,' %')}</tr>
+   ${bat?`<tr><td>Speicher-Entladung</td>${st(x=>x.bout,0,' kWh')}</tr>`:''}
+   <tr><td>Abregelung</td>${st(x=>x.curt,0,' kWh')}</tr>
+   <tr><td>Kapitalwert</td>${st(x=>x.npv,0,' €')}</tr></tbody>`;
+  document.getElementById('wxNote').textContent=`${r.length} von 10 Wetterjahren berechnet${WX.done?'':' …'} Die Jahresstrahlung ist in allen Varianten gleich. Echte Jahre schwanken zusätzlich um etwa ±5–8 % in der Strahlung – das deckt die Variation „PV-Ertrag ±10 %“ oben ab.`;
+}
+
+/* ---------- Normen & Annahmen ---------- */
+function renderDocs(){
+  document.getElementById('docs').innerHTML=`
+<h2>Rechenmodell</h2>
+<p>Simuliert wird ein vollständiges Jahr in 8.760 Stundenschritten und daraus jedes Betriebsjahr einzeln (Degradation, Speicheralterung, Ersatzinvestitionen). Für Planungssicherheit sollten Standortstrahlung und – falls vorhanden – ein gemessener Lastgang eingetragen werden.</p>
+<h3>Strahlung und Wetter</h3>
+<ul>
+<li>Sonnenstand und Zeitgleichung nach Spencer (1971); Uhrzeit MEZ, Sommerzeit nur im Lastprofil berücksichtigt.</li>
+<li>Synthetisches Referenzjahr: Tages-Klarheitsindex mit Persistenz, Monatssummen exakt auf die eingegebene Jahresglobalstrahlung und die typische Monatsverteilung in Deutschland kalibriert. Stundenverteilung nach Collares-Pereira &amp; Rabl.</li>
+<li>Aufteilung direkt/diffus nach Erbs et al. (1982), Umrechnung auf die Modulebene mit dem anisotropen Hay-Davies-Modell plus Bodenreflexion.</li>
+<li>Reflexionsverluste (IAM) nach Martin &amp; Ruiz, Fernverschattung über ein 8-Sektoren-Horizontprofil, Reihenverschattung aufgeständerter Flachdachanlagen über den Profilwinkel der Sonne.</li>
+<li>Ost-West-Flachdach: Jede Modulreihe wird bei tiefem Sonnenstand vom First der benachbarten Doppelreihe verschattet (Höhe = Modullänge × sin Neigung, Abstand = Modultiefe + Spalt). Die erste bzw. letzte Reihe ist frei. Bei 10° Neigung beginnt die Verschattung erst unter ca. 9° Sonnenhöhe in Ost-West-Richtung; der Verlust liegt meist bei 1–2 %, steigt aber mit größerer Neigung und kleinerem Spalt deutlich. Die Diffusstrahlung wird durch die Nachbarreihen leicht abgeschattet.</li>
+<li>Wetterjahr: Die Nummer wählt eine andere zufällige Abfolge sonniger und trüber Tage bei identischen Monatssummen. Der Reiter „Sensitivität“ zeigt die Spannbreite über 10 Varianten.</li>
+</ul>
+<h3>Belegung, Stringplanung und Wechselrichter</h3>
+<ul>
+<li>Belegung je Dachfläche reihenweise von der Traufe aus, zentriert, mit umlaufendem Randabstand; bei Trapez- und Dreiecksflächen wird die nutzbare Breite je Reihe aus den schrägen Kanten bestimmt. Flachdach Süd mit Reihenabstand aus der verschattungsfreien Sonnenhöhe, Ost-West als Doppelreihen.</li>
+<li>Dachform-Assistent: Sattel-, Walm-, Pult-, Zelt- und Flachdach aus Gebäudemaßen; Sparrenlänge = horizontale Tiefe / cos(Neigung).</li>
+<li>Stringlänge: Leerlaufspannung bei tiefster Temperatur ≤ max. DC-Spannung, MPP-Spannung bei ${fmt(P.tmin)} °C ≤ obere MPP-Grenze, MPP-Spannung bei 70 °C ≥ untere MPP-Grenze (DIN VDE 0100-712, DIN EN IEC 62548-1). Bevorzugt gleich lange Strings, damit sie parallel an einem MPP-Tracker betrieben werden können; Strings unterschiedlicher Ausrichtung erhalten eigene Tracker.</li>
+<li>Wechselrichter-Empfehlung: Prüfung aller Leistungsklassen (einphasig bis 4,6 kVA, dreiphasig 5–30 kW mit Hybridoption, Gewerbe 36–125 kW) und Gerätezahlen. Zulässig sind Konfigurationen mit DC/AC 0,7–1,45 und ausreichend MPP-Trackern; gewählt wird die mit den geringsten Kosten aus Gerätepreis, Installationsaufwand und Abweichung vom Ziel-DC/AC-Verhältnis. Die Strings werden so auf die Geräte verteilt, dass die DC/AC-Verhältnisse ausgeglichen sind.</li>
+<li>Die Simulation rechnet jeden Wechselrichter einzeln: Teillast-Wirkungsgradkurve und Begrenzung auf die AC-Nennleistung (Clipping). Ein DC-gekoppelter Speicher an einem Hybrid-Wechselrichter lädt abgeschnittene Leistung.</li>
+<li>Modulstrom 25 % über Isc als Sicherheitszuschlag, DC-Leitungsverluste je String aus Länge und Querschnitt (Kupfer 70 °C); AC-Leitung und Leitungsschutz aus Bemessungsstrom (Verlegeart B2, Richtwerte DIN VDE 0298-4).</li>
+</ul>
+<h3>Speicherempfehlung</h3>
+<ul>
+<li>Technisch: Aus der Simulation ohne Speicher wird für jeden Tag im Sommerhalbjahr der verschiebbare Strom bestimmt (Minimum aus PV-Überschuss und Abend-/Nachtbedarf 15–9 Uhr). Die Empfehlung deckt diesen Bedarf an 75 % der Tage, begrenzt auf 1,5 kWh je kWp und aufgerundet auf die nächste marktübliche Größe. Leistung aus der 95-%-Abendspitze, mindestens 0,4 C.</li>
+<li>Wirtschaftlich: Kapitalwert über den Betrachtungszeitraum für mehrere Speichergrößen inkl. Hybrid-Aufpreis und Speichertausch.</li>
+<li>Speicher und Wallbox sind standardmäßig nicht eingerechnet. Die Wallbox selbst wird nicht als PV-Investition bewertet; der Ladestrom erhöht den Verbrauch und wird zum Arbeitspreis bewertet.</li>
+</ul>
+<h3>Verbrauch</h3>
+<ul>
+<li>H0: BDEW-Standardlastprofil Haushalt mit Dynamisierungsfunktion. G0/G1/Schule: typisierte Tagesgänge, Feiertage und Schulferien NRW (2027, Näherung). Lastspitzen innerhalb der Stunde über den einstellbaren Spitzenanteil.</li>
+<li>Wärmepumpe nach Heizgradstunden, Warmwasser mit Tagesgang. E-Auto mit PV-Überschussladen (mind. 1,4 kW) oder Abendladen.</li>
+</ul>
+<h3>Wirtschaftlichkeit</h3>
+<ul>
+<li>Kapitalwert und interner Zinsfuß aus Eigenkapitalsicht (Annuitätenkredit), statische und dynamische Amortisation, Stromgestehungskosten als abgezinste Kosten je abgezinster nutzbarer kWh (Vorgehen analog VDI 2067 / VDI 6025).</li>
+<li>Einspeisung in Stunden mit negativen Preisen bleibt unvergütet; Steuern auf Erträge werden nicht gerechnet (bis 30 kWp steuerfrei nach § 3 Nr. 72 EStG). Restwert am Ende: null.</li>
+</ul>
+<h2>Normen und Regelwerke</h2>
+<ul>
+<li><b>DIN VDE 0100-712</b> – Errichten von PV-Stromversorgungssystemen; <b>DIN EN IEC 62548-1 (VDE 0126-42-1)</b> – Auslegung PV-Generator.</li>
+<li><b>DIN VDE 0100-520</b> – Leitungsbemessung, Spannungsfall; <b>DIN VDE 0298-4</b> – Strombelastbarkeit.</li>
+<li><b>DIN VDE 0100-443 / -534</b> – Überspannungsschutz; <b>DIN EN 62305 (VDE 0185-305)</b> – Blitzschutz, Trennungsabstand.</li>
+<li><b>DIN EN IEC 61215 / 61730</b> – PV-Module; <b>DIN EN IEC 62109-1/-2</b> – Wechselrichter.</li>
+<li><b>VDE-AR-N 4100</b> – Zählerplatz; <b>VDE-AR-N 4105:2018-11</b> – Erzeugungsanlagen am Niederspannungsnetz (Schieflast ≤ 4,6 kVA, NA-Schutz zentral &gt; 30 kVA, Anlagenzertifikat &gt; 135 kW).</li>
+<li><b>VDE-AR-E 2510-50</b>, <b>DIN EN IEC 62619</b> – stationäre Lithium-Speicher.</li>
+<li><b>DIN EN 62446-1</b> – Prüfung, Dokumentation, Inbetriebnahme; <b>DIN VDE 0105-100</b> – wiederkehrende Prüfung; <b>DIN EN IEC 61724-1</b> – Performance Ratio.</li>
+<li><b>DIN EN 1991-1-3 / -1-4</b> – Schnee- und Windlasten; Landesbauordnung (z. B. BauO NRW) – Abstände zu Brandwänden und Dachrändern.</li>
+</ul>
+<h2>Rechtlicher Rahmen und Preisannahmen (Stand 11/2026)</h2>
+<ul>
+<li><b>EEG-Vergütung</b> für Inbetriebnahme 01.08.2026–31.01.2027: Teileinspeisung 7,70 / 6,66 / 5,44 ct/kWh (bis 10 / 40 / 100 kWp), Volleinspeisung 12,22 / 10,24 ct/kWh; halbjährliche Degression 1 %. Eine EEG-Novelle für Neuanlagen ab 2027 ist im Gesetzgebungsverfahren – Satz ggf. manuell anpassen.</li>
+<li><b>Solarspitzengesetz</b>: Einspeisebegrenzung 60 % bis zum Einbau von Smart Meter und Steuerbox (§ 9 EEG); keine Vergütung bei negativen Börsenpreisen (§ 51 EEG).</li>
+<li><b>MsbG</b>: intelligentes Messsystem ab 7 kWp. <b>§ 14a EnWG</b>: steuerbare Verbraucher (Wärmepumpe, Wallbox) – reduziertes Netzentgelt nicht berücksichtigt.</li>
+<li><b>Umsatzsteuer</b>: 0 % nach § 12 Abs. 3 UStG bis 30 kWp auf Wohn- und Gemeinwohlgebäuden.</li>
+<li><b>Preise 2026</b> (Richtwerte): PV schlüsselfertig ca. 1.000–1.300 €/kWp bei 10 kWp, Speicher ca. 400–600 €/kWh inkl. Installation, Wechselrichter je Leistungsklasse hinterlegt (Hybrid +40 %).</li>
+</ul>
+<p class="note">Die Region-Richtwerte sind gerundete Mittelwerte. Für eine Ausschreibung Standortdaten aus PVGIS (EU-JRC) oder vom DWD verwenden. Das Ergebnis ersetzt keine Fachplanung nach DIN VDE 0100-712, keine Herstellerauslegung des Wechselrichters und keine statische Prüfung.</p>`;
+}
+
+/* ===================== Kopfleiste ===================== */
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+async function copyText(txt,ok){try{await navigator.clipboard.writeText(txt);toast(ok)}catch(e){showDialog('Text zum Kopieren',txt,null)}}
+function showDialog(title,txt,onApply){
+  const o=document.createElement('div');o.className='overlay';
+  o.innerHTML=`<div class="dialog" role="dialog" aria-modal="true" aria-label="${esc(title)}"><h2>${esc(title)}</h2><textarea id="dlgText">${esc(txt||'')}</textarea><p class="note" id="dlgMsg">${onApply?'JSON aus „Parameter kopieren“ einfügen.':'Text markieren und mit Strg+C kopieren.'}</p><div style="display:flex;gap:8px;justify-content:flex-end">${onApply?'<button class="btn pri" type="button" id="dlgOk">Übernehmen</button>':''}<button class="btn" type="button" id="dlgClose">Schließen</button></div></div>`;
+  document.body.appendChild(o);const ta=o.querySelector('#dlgText');ta.focus();if(!onApply)ta.select();
+  o.querySelector('#dlgClose').onclick=()=>o.remove();
+  if(onApply)o.querySelector('#dlgOk').onclick=()=>{try{onApply(ta.value);o.remove()}catch(e){o.querySelector('#dlgMsg').textContent='Das ist kein gültiges Parameter-JSON. Bitte den kompletten Text aus „Parameter kopieren“ einfügen.'}};
+}
+document.getElementById('btnCopyParams').onclick=()=>copyText(JSON.stringify(P,null,1),'Parameter in die Zwischenablage kopiert');
+document.getElementById('btnLoadParams').onclick=()=>showDialog('Parameter einfügen','',(txt)=>{const o=JSON.parse(txt);if(typeof o!=='object'||!o)throw 0;P=Object.assign(defaults(),o);renderInputs();compute();toast('Parameter übernommen')});
+document.getElementById('btnReset').onclick=()=>{P=defaults();document.getElementById('scenario').value='0';renderInputs();compute();toast('Standardwerte geladen')};
+document.getElementById('btnCsv').onclick=()=>{
+  if(!R)return;const f=(v,d=2)=>(v==null||!isFinite(v))?'':v.toFixed(d).replace('.',',');
+  let s='PV-Anlagenrechner;Export\nAnlagenleistung kWp;'+f(M.kWp)+'\nWechselrichter;'+M.D.k+' x '+f(M.D.t.kw,1)+' kW\nJahresertrag nutzbar kWh;'+f(R.first.pv-R.first.curt,0)+'\nEigenverbrauchsquote %;'+f(R.first.evq*100,1)+'\nAutarkie %;'+f(R.first.aut*100,1)+'\nInvestition €;'+f(R.I,0)+'\nKapitalwert €;'+f(R.npv,0)+'\nIZF %;'+f(R.irr!=null?R.irr*100:null,2)+'\nLCOE ct/kWh;'+f(R.lcoe*100,2)+'\nSpeicherempfehlung kWh;'+f(REC.bat.cap,1)+'\n\n';
+  s+='String;Module;WR;MPPT;Fläche\n';for(const st of M.D.strings)s+=[st.id,st.len,st.inv+1,st.mppt,M.groups[st.g].name].join(';')+'\n';
+  s+='\nMonat;PV kWh;Verbrauch kWh;Direkt kWh;Speicher ein kWh;Speicher aus kWh;Einspeisung kWh;Abregelung kWh;Netzbezug kWh\n';
+  const mo=R.first.mo;for(let m=0;m<12;m++)s+=[MNAMES[m],f(mo.pv[m],1),f(mo.load[m],1),f(mo.dir[m],1),f(mo.bin[m],1),f(mo.bout[m],1),f(mo.feed[m],1),f(mo.curt[m],1),f(mo.grid[m],1)].join(';')+'\n';
+  s+='\nJahr;PV kWh;Eigenverbrauch kWh;Einspeisung kWh;Netzbezug kWh;Strompreis ct;Ersparnis €;Erlös €;Betrieb €;Ersatz €;Kredit €;Cashflow €;Kumuliert €\n';
+  s+='0;;;;;;;;;;;'+f(-(R.I-R.loan))+';'+f(-(R.I-R.loan))+'\n';
+  for(const r of R.rows)s+=[r.y,f(r.pv,0),f(r.self,0),f(r.feed,0),f(r.grid,0),f(r.price*100,2),f(r.save),f(r.rev),f(r.opex),f(r.repl),f(r.debt),f(r.cf),f(r.cum)].join(';')+'\n';
+  copyText(s,'CSV kopiert – in Excel einfügen');
+};
+const scSel=document.getElementById('scenario');
+scSel.innerHTML=SCENARIOS.map((s,i)=>`<option value="${i}">${esc(s.label)}</option>`).join('');
+scSel.onchange=()=>{const s=SCENARIOS[+scSel.value];P=Object.assign(defaults(),JSON.parse(JSON.stringify(s.over)));renderInputs();compute();toast('Szenario geladen')};
+
+const rerender=()=>{dirty={ov:1,plan:1,yield:1,self:1,econ:1,orient:1,sens:1,docs:1};renderTab(activeTab)};
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',rerender)}catch(e){}
+new MutationObserver(rerender).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+renderInputs();
+try{const t=localStorage.getItem(LSKEY+'.tab');if(t&&document.querySelector(`[data-tab="${t}"]`))activeTab=t}catch(e){}
+document.querySelectorAll('[role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===activeTab?'true':'false'));
+document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==activeTab);
+compute();
+</script>
