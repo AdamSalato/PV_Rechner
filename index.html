@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PV-Anlagenrechner</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -172,7 +177,8 @@ tr.hl td{background:var(--sun-soft)}
 #tipbox{position:fixed;z-index:70;max-width:min(330px,calc(100vw - 24px));background:var(--ink);color:var(--panel);font-size:12.5px;line-height:1.45;padding:8px 11px;border-radius:6px;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.22);text-transform:none;letter-spacing:0;font-weight:400}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-
+</head>
+<body>
 <header class="top">
   <div class="brand">
     <svg class="mark" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="9" width="24" height="16" rx="1.5" fill="var(--cell)"/><path d="M1 14.3h24M1 19.6h24M9 9v16M17 9v16" stroke="var(--panel)" stroke-width="1"/><circle cx="20" cy="5" r="3.6" fill="var(--sun)"/></svg>
@@ -1894,3 +1900,6 @@ document.querySelectorAll('[role=tab]').forEach(b=>b.setAttribute('aria-selected
 document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==activeTab);
 compute();
 </script>
+
+</body>
+</html>
