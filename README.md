@@ -17,13 +17,14 @@ Browserbasierter Rechner für Ertrag, Verschaltung und Wirtschaftlichkeit von Ph
 
 ## Nutzung
 
-**Lokal:** `pv-rechner.html` im Browser öffnen. Für die Diagramme ist eine Internetverbindung nötig (Chart.js über CDN).
+**Lokal:** `index.html` im Browser öffnen. Für die Diagramme ist eine Internetverbindung nötig (Chart.js über CDN).
 
 **GitHub Pages:**
 
-1. Datei ins Repository legen – als `index.html` umbenennen, wenn der Rechner direkt unter der Repository-Adresse erscheinen soll.
-2. *Settings → Pages → Source: Deploy from a branch*, Branch `main`, Ordner `/ (root)`.
-3. Nach ca. einer Minute erreichbar unter `https://<benutzername>.github.io/<repository>/`.
+1. `index.html` ins Hauptverzeichnis des Repositorys legen.
+2. Eine leere Datei `.nojekyll` anlegen (`touch .nojekyll`). Sonst macht GitHub Pages aus dieser README die Startseite.
+3. *Settings → Pages → Source: Deploy from a branch*, Branch `main`, Ordner `/ (root)`.
+4. Nach ca. einer Minute erreichbar unter `https://<benutzername>.github.io/<repository>/`.
 
 Eingaben werden lokal im Browser gespeichert (localStorage) und nicht übertragen.
 
